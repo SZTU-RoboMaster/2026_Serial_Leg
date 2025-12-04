@@ -17,6 +17,12 @@
  *******************************************************************************/
 
 /** 宏定义 **/
+#define LEG_22_F_POS 2.74f
+#define LEG_22_B_POS 0.60f
+
+
+//#define LEG_22_F_POS 2.74f - (20 * DEGREE_TO_RAD)
+//#define LEG_22_B_POS 0.60f + (20 * DEGREE_TO_RAD)
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 5 // ms 计算频率: 200Hz

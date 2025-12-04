@@ -103,5 +103,6 @@ float Get_OLS_Derivative(Ordinary_Least_Squares_t *OLS);
 float OLS_Smooth(Ordinary_Least_Squares_t *OLS, float deltax, float y);
 float Get_OLS_Smooth(Ordinary_Least_Squares_t *OLS);
 
+int16_t float_to_int16(float float_val);
 
 #endif

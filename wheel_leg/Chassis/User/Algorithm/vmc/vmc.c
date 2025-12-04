@@ -18,12 +18,22 @@ extern ChassisPhysicalConfig chassis_physical_config;
  *    phi1                      phi1
  */
 
+float LF_test = 0;
+float LB_test = 0;
+float RF_test = 0;
+float RB_test = 0;
+
 void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
 
     float LF_joint_pos = (get_joint_motors() + 0)->pos_r;
     float LB_joint_pos = (get_joint_motors() + 1)->pos_r;
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
+
+    LF_test = LF_joint_pos;
+    LB_test = LB_joint_pos;
+    RF_test = RF_joint_pos;
+    RB_test = RB_joint_pos;
 
     leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos;
     leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos;
@@ -287,5 +297,4 @@ void vmc_calc(void) {
 
     // VMC 正运动学解算
     forward_kinematics(&chassis.leg_L, &chassis.leg_R, &chassis_physical_config);
-
 }

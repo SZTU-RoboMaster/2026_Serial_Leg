@@ -71,12 +71,12 @@ void set_dm8009p_disable(Dm8009P* motor){
 /** 位置速度模式模式 **/
 void set_dm8009p_pos_speed(Dm8009P* motor,
                           float pos_rad,
-                          float speed_rps) {
+                          float speed_rad_per_s) {
 
     JointTxFrame.Header.StdId = motor->id + 0x100;
 
     uint8_t *posbuf = (uint8_t *) &pos_rad;
-    uint8_t *speedbuf = (uint8_t *) &speed_rps;
+    uint8_t *speedbuf = (uint8_t *) &speed_rad_per_s;
 
     JointTxFrame.Data[0] = *posbuf;
     JointTxFrame.Data[1] = *(posbuf + 1);

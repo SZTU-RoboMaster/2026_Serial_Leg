@@ -589,6 +589,35 @@ static void send_torque_task(float joint_LF_torque, float joint_LB_torque, float
 
 }
 
+static void temp_send_wheel_torque(float wheel_L_torque, float wheel_R_torque)
+{
+    DJI_Current_Set(0,
+                    0,
+                    0,
+                    0);
+}
+
+static void send_pos_speed_task(float LF_pos, float LB_pos, float RF_pos, float RB_pos,
+                                float LF_speed, float LB_speed, float RF_speed, float RB_speed)
+{
+    set_dm8009p_pos_speed(&joint[LF],LF_pos, LF_speed);
+    set_dm8009p_pos_speed(&joint[LB],LB_pos, LB_speed);
+    DWT_Delay(0.0002f);
+    set_dm8009p_pos_speed(&joint[RF],RF_pos, RF_speed);
+    set_dm8009p_pos_speed(&joint[RB],RB_pos, RB_speed);
+}
+
+// 腿长0.22  LF_pos：2.74 LB_pos：0.60 RF_pos：-2.74 RB_pos：-0.60
+
+float speed = 0;
+float lf_pos = 0;
+float lb_pos = 0;
+float rf_pos = 0;
+float rb_pos = 0;
+
+int16_t l_wheel_torque = 0;
+int16_t r_wheel_torque = 0;
+
 void chassis_task(void)
 {
     /** 获取遥控器信息(模式 + 数据) **/
@@ -624,14 +653,41 @@ void chassis_task(void)
         }
     }
 
-    send_torque_task(0,
-                     0,
-                     0,
-                     0,
-                     0,
-                     0,
-                     0,
-                     0);
+    if (switch_is_mid(rc_ctrl.rc.s[RC_s_R]))
+    {
+        if(chassis.chassis_ctrl_mode == CHASSIS_ENABLE)
+        {
+            speed = 0.3f;
+            lf_pos = 2.66f;
+            lb_pos = 0.58f;
+            rf_pos = -2.64f;
+            rb_pos = -0.61f;
 
+            l_wheel_torque = 0.5;
+            r_wheel_torque = 0.5;
+        }
+    }
+    else
+    {
+        speed = 0.0f;
+        lf_pos = 0.0f;
+        lb_pos = 0.0f;
+        rf_pos = 0.0f;
+        rb_pos = 0.0f;
+
+        l_wheel_torque = 0;
+        r_wheel_torque = 0;
+    }
+
+    send_pos_speed_task(lf_pos,
+                        lb_pos,
+                        rf_pos,
+                        rb_pos,
+                        speed,
+                        -speed,
+                        -speed,
+                        speed);
+
+    temp_send_wheel_torque(-l_wheel_torque,r_wheel_torque);
 
 }

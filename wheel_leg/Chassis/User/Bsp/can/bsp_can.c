@@ -6,6 +6,7 @@
 #include "joint.h"
 #include "board_communication_task.h"
 #include "DJI_motor.h"
+#include "vofa.h"
 
 /* 关节发送结构体 */
 CAN_TxFrame_TypeDef JointTxFrame = {

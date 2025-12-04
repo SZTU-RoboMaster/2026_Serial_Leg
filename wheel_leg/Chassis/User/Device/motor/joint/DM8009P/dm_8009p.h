@@ -41,8 +41,8 @@ void set_dm8009p_disable(Dm8009P* motor);
 
 /** 位置速度模式模式 **/
 void set_dm8009p_pos_speed(Dm8009P* motor,
-                          float pos_rad,
-                          float speed_rps);
+                           float pos_rad,
+                           float speed_rad_per_s);
 
 /** 单电机MIT模式 **/
 void set_dm8009p_MIT(Dm8009P* motor,
