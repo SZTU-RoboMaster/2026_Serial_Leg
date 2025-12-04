@@ -2,10 +2,7 @@
 #define JOINT_H
 
 #include "can_device.h"
-#include "dm_8009.h"
-
-// 10°对应0.174rad
-#define RESET_THRESHOLD 0.522f
+#include "dm_8009p.h"
 
 enum JointMotorIndex{
     LF=0,
@@ -21,11 +18,8 @@ void joint_init(void);
 void joint_enable(void);
 
 /** 返回关节电机指针 **/
-Dm8009* get_joint_motors(void);
+Dm8009P* get_joint_motors(void);
 
-extern Dm8009 joint[4];
-
-extern float Kd;
-extern float vel;
+extern Dm8009P joint[4];
 
 #endif

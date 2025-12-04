@@ -1,11 +1,11 @@
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_can.h>
 
-#include "dm_8009.h"
+#include "dm_8009p.h"
 #include "bsp_can.h"
 
-Dm8009 *dm_motors[4];
-uint8_t dm_motors_len = 0;
+Dm8009P *dm_8009p[4];
+uint8_t dm_8009p_len = 0;
 
 static int float_to_uint(float x, float x_min, float x_max, int bits) {
     /// Converts a float to an unsigned int, given range and number of bits///
@@ -22,20 +22,20 @@ static float uint_to_float(int x_int, float x_min, float x_max, int bits) {
 }
 
 /** 这两个函数是为了将joint.c定义的joint[4]和dm8009.c定义的dm_motors[4]绑定在一起 **/
-static void dm8009_register(Dm8009 *motor) {
-    dm_motors[dm_motors_len] = motor;
-    ++dm_motors_len;
+static void dm8009p_register(Dm8009P *motor) {
+    dm_8009p[dm_8009p_len] = motor;
+    ++dm_8009p_len;
 }
 
-void dm8009_init(Dm8009 *motor, uint32_t device_id) {
+void dm8009p_init(Dm8009P *motor, uint32_t device_id) {
     motor->id = device_id;
 
-    dm8009_register(motor);
+    dm8009p_register(motor);
 }
 /****************************************************************************/
 
 /** 使能电机 **/
-void set_dm8009_enable(Dm8009* motor){
+void set_dm8009p_enable(Dm8009P* motor){
 
     JointTxFrame.Header.StdId = motor->id;
 
@@ -52,7 +52,7 @@ void set_dm8009_enable(Dm8009* motor){
 }
 
 /** 失能电机 **/
-void set_dm8009_disable(Dm8009* motor){
+void set_dm8009p_disable(Dm8009P* motor){
 
     JointTxFrame.Header.StdId = motor->id;
 
@@ -69,7 +69,7 @@ void set_dm8009_disable(Dm8009* motor){
 }
 
 /** 位置速度模式模式 **/
-void set_dm8009_pos_speed(Dm8009* motor,
+void set_dm8009p_pos_speed(Dm8009P* motor,
                           float pos_rad,
                           float speed_rps) {
 
@@ -91,7 +91,7 @@ void set_dm8009_pos_speed(Dm8009* motor,
 }
 
 /** 单电机MIT模式 **/
-void set_dm8009_MIT(Dm8009* motor,
+void set_dm8009p_MIT(Dm8009P* motor,
                     float pos,
                     float speed,
                     float kp,
@@ -101,11 +101,11 @@ void set_dm8009_MIT(Dm8009* motor,
     JointTxFrame.Header.StdId = motor->id;
 
     uint16_t pos_tmp, vel_tmp, kp_tmp, kd_tmp, tor_tmp;
-    pos_tmp = float_to_uint(pos, -12.5f, 12.5f, 16);
-    vel_tmp = float_to_uint(speed, -45, 45, 12);
-    kp_tmp = float_to_uint(kp, 0.0f, 500, 12);
-    kd_tmp = float_to_uint(kd, 0.0f, 5.0f, 12);
-    tor_tmp = float_to_uint(torque, -50, 50, 12);
+    pos_tmp = float_to_uint(pos, DM8009P_P_MIN, DM8009P_P_MAX, 16); // -12.5 ~ 12.5
+    vel_tmp = float_to_uint(speed, DM8009P_V_MIN, DM8009P_V_MAX, 12); // -45 ~ 45
+    kp_tmp = float_to_uint(kp, DM8009P_KP_MIN, DM8009P_KP_MAX, 12); // 0 ~ 500
+    kd_tmp = float_to_uint(kd, DM8009P_KD_MIN, DM8009P_KD_MAX, 12); // 0 ~ 5
+    tor_tmp = float_to_uint(torque, DM8009P_T_MIN, DM8009P_T_MAX, 12); // -50 ~ 50
 
     JointTxFrame.Data[0] = (pos_tmp >> 8);
     JointTxFrame.Data[1] = pos_tmp;
@@ -120,14 +120,14 @@ void set_dm8009_MIT(Dm8009* motor,
 }
 
 /** 关节电机反馈解析 **/
-void dm8009_info_update(Dm8009* motor, uint8_t data[])
+void dm8009p_info_update(Dm8009P* motor, uint8_t data[])
 {
     int pos_int = (data[1] << 8) | data[2];
     int speed_int = (data[3] << 4) | (data[4] >> 4);
     int torque_int = (data[4] & 0xF) << 8 | data[5];
 
-    motor->pos_r = uint_to_float(pos_int, -12.5f, 12.5f, 16);
-    motor->angular_vel = uint_to_float(speed_int, -45.0f, 45.0f, 12);
-    motor->torque = uint_to_float(torque_int, -50.0f, 50.0f, 12);
+    motor->pos_r = uint_to_float(pos_int, DM8009P_P_MIN, DM8009P_P_MAX, 16);
+    motor->angular_vel = uint_to_float(speed_int, DM8009P_V_MIN, DM8009P_V_MAX, 12);
+    motor->torque = uint_to_float(torque_int, DM8009P_T_MIN, DM8009P_T_MAX, 12);
 }
 

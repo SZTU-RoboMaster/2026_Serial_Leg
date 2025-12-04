@@ -25,11 +25,10 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
 
-    leg_L->vmc.forward_kinematics.fk_phi.phi1 = (5*PI)/4 + LB_joint_pos - 7.0f * DEGREE_TO_RAD;
-    leg_L->vmc.forward_kinematics.fk_phi.phi4 = -PI/4 + LF_joint_pos + 10.0f * DEGREE_TO_RAD;
-
-    leg_R->vmc.forward_kinematics.fk_phi.phi1 = (5*PI)/4 - RB_joint_pos - 9.0f * DEGREE_TO_RAD;
-    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -PI/4 - RF_joint_pos + 7.0f * DEGREE_TO_RAD;
+    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos;
+    leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos;
+    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos;
 
 }
 
@@ -62,7 +61,7 @@ static void forward_kinematics(Leg* leg_L, Leg* leg_R, ChassisPhysicalConfig *ph
     leg_L->vmc.forward_kinematics.fk_point_coordinates.b_x = physical_config->l1 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi1);
     leg_L->vmc.forward_kinematics.fk_point_coordinates.b_y = physical_config->l1 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi1);
     leg_L->vmc.forward_kinematics.fk_point_coordinates.d_x = physical_config->l5 + physical_config->l4 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi4);
-    leg_L->vmc.forward_kinematics.fk_point_coordinates.d_y = physical_config->l4 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi4); // l5 ¸Ä³ÉÁË l4
+    leg_L->vmc.forward_kinematics.fk_point_coordinates.d_y = physical_config->l4 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi4);
 
     float L_A0 = 2.0f * physical_config->l2 * (leg_L->vmc.forward_kinematics.fk_point_coordinates.d_x - leg_L->vmc.forward_kinematics.fk_point_coordinates.b_x);
     float L_B0 = 2.0f * physical_config->l2 * (leg_L->vmc.forward_kinematics.fk_point_coordinates.d_y - leg_L->vmc.forward_kinematics.fk_point_coordinates.b_y);

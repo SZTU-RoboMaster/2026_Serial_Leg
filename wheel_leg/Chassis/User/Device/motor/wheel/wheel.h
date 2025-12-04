@@ -2,7 +2,7 @@
 #define WHEEL_H
 
 #include "can_device.h"
-#include "lk9025.h"
+#include "DJI_motor.h"
 
 enum WheelMotorIndex{
     L = 0,
@@ -13,8 +13,8 @@ enum WheelMotorIndex{
 void wheel_init(void);
 
 /** 返回轮毂电机指针 **/
-Lk9025 *get_wheel_motors();
+DJI_Motor_t *get_wheel_motors();
 
-extern Lk9025 wheel[2];
+extern DJI_Motor_t wheel[2];
 
 #endif

@@ -49,7 +49,7 @@ else ()
 endif ()
 
 include_directories(${includes}
-        User/Algorithm/controller
+User/Algorithm/controller
         User/Algorithm/filter/moving_filter
         User/Algorithm/filter/low_pass_filter
         User/Algorithm/filter/kalman_filter
@@ -77,11 +77,10 @@ include_directories(${includes}
         User/Device/ist8310
         User/Device/key_board
         User/Device/led
-        User/Device/motor/dji
         User/Device/motor/joint
-        User/Device/motor/joint/DM8009
+        User/Device/motor/joint/DM8009P
         User/Device/motor/wheel
-        User/Device/motor/wheel/LK9025
+        User/Device/motor/wheel/DJI
         User/Device/remote
         User/Device/vofa
 

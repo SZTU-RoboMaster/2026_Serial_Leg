@@ -64,12 +64,12 @@ void speed_calc(void)
     // 以向前移动为正方向
 
     // 左边驱动轮转子相对大地角速度
-    w_l = get_wheel_motors()->angular_vel + (- INS.Gyro[Y]) + chassis.leg_L.vmc.forward_kinematics.d_alpha;
+    w_l = -get_wheel_motors()->speed_rpm + chassis.imu_reference.pitch_gyro + chassis.leg_L.vmc.forward_kinematics.d_alpha;
     // 轮毂相对于机体(b系)的速度
     v_lb = w_l * chassis_physical_config.wheel_radius + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_L.state_variable_feedback.theta_dot * arm_cos_f32(chassis.leg_L.state_variable_feedback.theta) + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot * arm_sin_f32(chassis.leg_L.state_variable_feedback.theta);
 
     // 右边驱动轮转子相对大地角速度
-    w_r = -(get_wheel_motors() + 1)->angular_vel + (- INS.Gyro[Y]) + chassis.leg_R.vmc.forward_kinematics.d_alpha;
+    w_r = (get_wheel_motors() + 1)->speed_rpm + chassis.imu_reference.pitch_gyro + chassis.leg_R.vmc.forward_kinematics.d_alpha;
     // 轮毂相对于机体(b系)的速度
     v_rb = w_r * chassis_physical_config.wheel_radius + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_R.state_variable_feedback.theta_dot * arm_cos_f32(chassis.leg_R.state_variable_feedback.theta) + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0_dot * arm_sin_f32(chassis.leg_R.state_variable_feedback.theta);
 

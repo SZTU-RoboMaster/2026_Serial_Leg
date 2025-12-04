@@ -78,11 +78,10 @@ include_directories(Core/Inc USB_DEVICE/App USB_DEVICE/Target Drivers/STM32F4xx_
         User/Device/ist8310
         User/Device/key_board
         User/Device/led
-        User/Device/motor/dji
         User/Device/motor/joint
-        User/Device/motor/joint/DM8009
+        User/Device/motor/joint/DM8009P
         User/Device/motor/wheel
-        User/Device/motor/wheel/LK9025
+        User/Device/motor/wheel/DJI
         User/Device/remote
         User/Device/vofa
 

@@ -5,6 +5,7 @@
 #include "wheel.h"
 #include "joint.h"
 #include "board_communication_task.h"
+#include "DJI_motor.h"
 
 /* 关节发送结构体 */
 CAN_TxFrame_TypeDef JointTxFrame = {
@@ -24,7 +25,7 @@ CAN_TxFrame_TypeDef WheelTxFrame = {
 
         .hcan = &hcan2,
 
-        .Header.StdId = 0x280,
+        .Header.StdId = 0x1FF,
         .Header.ExtId = 0,
         .Header.IDE = CAN_ID_STD,
         .Header.RTR = CAN_RTR_DATA,
@@ -107,25 +108,25 @@ static void CAN1_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[])
     switch (CAN1_RxFrame.Header.StdId) {
         case JOINT_LF_RECEIVE:
         {
-            dm8009_info_update(&joint[LF], Data);
+            dm8009p_info_update(&joint[LF], Data);
             break;
         }
 
         case JOINT_LB_RECEIVE:
         {
-            dm8009_info_update(&joint[LB], Data);
+            dm8009p_info_update(&joint[LB], Data);
             break;
         }
 
         case JOINT_RF_RECEIVE:
         {
-            dm8009_info_update(&joint[RF], Data);
+            dm8009p_info_update(&joint[RF], Data);
             break;
         }
 
         case JOINT_RB_RECEIVE:
         {
-            dm8009_info_update(&joint[RB], Data);
+            dm8009p_info_update(&joint[RB], Data);
             break;
         }
 
@@ -142,21 +143,16 @@ static void CAN2_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[])
 {
     switch(CAN2_RxFrame.Header.StdId){
 
-        case (LK_FDB_Identifier + WHEEL_L_SEND) :
+        case WHEEL_L_RECEIVE :
         {
-            lk9025_info_update(&wheel[L], Data);
+            DJI_Info_Update(&wheel[L], Data);
             break;
         }
 
-        case (LK_FDB_Identifier + WHEEL_R_SEND) :
+        case WHEEL_R_RECEIVE :
         {
-            lk9025_info_update(&wheel[R], Data);
+            DJI_Info_Update(&wheel[R], Data);
             break;
-        }
-
-        case 0x110: // 云台发给底盘的数据帧的ID
-        {
-            Gimbal_Data_Unpack(Data);
         }
 
         default:
