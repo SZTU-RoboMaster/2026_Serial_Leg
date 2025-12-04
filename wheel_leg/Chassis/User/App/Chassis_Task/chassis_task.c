@@ -591,8 +591,13 @@ static void send_torque_task(float joint_LF_torque, float joint_LB_torque, float
 
 static void temp_send_wheel_torque(float wheel_L_torque, float wheel_R_torque)
 {
-    DJI_Current_Set(0,
-                    0,
+    int16_t L_wheel_data = wheel_L_torque * (1 / TORQUE_CONSTANT_3508) * DATA_PER_A;
+    int16_t R_wheel_data = wheel_R_torque * (1 / TORQUE_CONSTANT_3508) * DATA_PER_A;
+
+    USART_Vofa_Justfloat_Transmit(L_wheel_data,R_wheel_data,0);
+
+    DJI_Current_Set(L_wheel_data,
+                    R_wheel_data,
                     0,
                     0);
 }
@@ -609,14 +614,14 @@ static void send_pos_speed_task(float LF_pos, float LB_pos, float RF_pos, float 
 
 // Õ»≥§0.22  LF_pos£∫2.74 LB_pos£∫0.60 RF_pos£∫-2.74 RB_pos£∫-0.60
 
-float speed = 0;
-float lf_pos = 0;
-float lb_pos = 0;
-float rf_pos = 0;
-float rb_pos = 0;
+float speed = 0.0f;
+float lf_pos = 0.0f;
+float lb_pos = 0.0f;
+float rf_pos = 0.0f;
+float rb_pos = 0.0f;
 
-int16_t l_wheel_torque = 0;
-int16_t r_wheel_torque = 0;
+float l_wheel_torque = 0.0f;
+float r_wheel_torque = 0.0f;
 
 void chassis_task(void)
 {
@@ -663,8 +668,8 @@ void chassis_task(void)
             rf_pos = -2.64f;
             rb_pos = -0.61f;
 
-            l_wheel_torque = 0.5;
-            r_wheel_torque = 0.5;
+            l_wheel_torque = 0.5f;
+            r_wheel_torque = 0.5f;
         }
     }
     else

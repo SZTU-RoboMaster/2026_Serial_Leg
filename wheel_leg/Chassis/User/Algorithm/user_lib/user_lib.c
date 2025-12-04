@@ -264,14 +264,3 @@ float Get_OLS_Smooth(Ordinary_Least_Squares_t *OLS)
 {
     return OLS->k * OLS->x[OLS->Order - 1] + OLS->b;
 }
-
-int16_t float_to_int16(float float_val)
-{
-    // 步骤1：范围限制
-    float_val = (float_val > 32767.0f) ? 32767.0f :
-                (float_val < -32768.0f) ? -32768.0f : float_val;
-
-    // 步骤2：四舍五入后强转
-    int16_t res = (int16_t)roundf(float_val);
-    return res;
-}
