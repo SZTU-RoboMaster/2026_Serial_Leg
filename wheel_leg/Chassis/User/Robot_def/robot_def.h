@@ -27,8 +27,9 @@
 // 底盘运行周期
 #define CHASSIS_PERIOD 5 // ms 计算频率: 200Hz
 
-// 平衡点
-#define PHI_BALANCE 0.0f * DEGREE_TO_RAD // 平衡点在0.0°
+#define BALANCE_POINT (-0.078f)
+
+#define RPM_TO_M_PER_S (PI * chassis_physical_config.wheel_radius) / 30
 
 // 旋转速度
 #define SPIN_SPEED 5.0f

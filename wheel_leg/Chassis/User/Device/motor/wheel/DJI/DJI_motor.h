@@ -3,7 +3,7 @@
 
 #include <stdint-gcc.h>
 
-#define TORQUE_CONSTANT_3508 0.3f  // Nm/A
+#define TORQUE_CONSTANT_3508 0.2325f  // Nm/A ∏€ø∆ºıÀŸœ‰
 
 #define DATA_PER_A (16384 / 20)
 
