@@ -22,19 +22,19 @@ k=get_k_length(0.24);
 %     j=j+1;
 % end
 
-a11=polyfit(leg,k11,3); % a11(1)*x^3 + a11(2)x^2 + a11(3)x^1 + a11(4) a11返回4个值
-a12=polyfit(leg,k12,3);
-a13=polyfit(leg,k13,3);
-a14=polyfit(leg,k14,3);
-a15=polyfit(leg,k15,3);
-a16=polyfit(leg,k16,3);
-
-a21=polyfit(leg,k21,3);
-a22=polyfit(leg,k22,3);
-a23=polyfit(leg,k23,3);
-a24=polyfit(leg,k24,3);
-a25=polyfit(leg,k25,3);
-a26=polyfit(leg,k26,3);
+% a11=polyfit(leg,k11,3); % a11(1)*x^3 + a11(2)x^2 + a11(3)x^1 + a11(4) a11返回4个值
+% a12=polyfit(leg,k12,3);
+% a13=polyfit(leg,k13,3);
+% a14=polyfit(leg,k14,3);
+% a15=polyfit(leg,k15,3);
+% a16=polyfit(leg,k16,3);
+% 
+% a21=polyfit(leg,k21,3);
+% a22=polyfit(leg,k22,3);
+% a23=polyfit(leg,k23,3);
+% a24=polyfit(leg,k24,3);
+% a25=polyfit(leg,k25,3);
+% a26=polyfit(leg,k26,3);
 
 fprintf('float wheel_K[6] = {\n');
 fprintf('%ff,%ff,%ff,%ff,%ff,%ff\n',k(1,1),k(1,2),k(1,3),k(1,4),k(1,5),k(1,6));
