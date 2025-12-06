@@ -25,18 +25,34 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
 
+
     leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos;
-    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.06f;
     leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos;
     leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos;
 
+//    USART_Vofa_Justfloat_Transmit(leg_L->vmc.forward_kinematics.fk_phi.phi1,leg_L->vmc.forward_kinematics.fk_phi.phi4,0);
 }
 
 /** ¼ÆËã×´Ì¬±äÁ¿theta **/
 float cal_leg_theta(float phi0, float phi) {
+    float theta = 0, alpha = 0;//alpha is the Angle at which the virtual joint motor is turned
+    alpha = PI / 2 - phi0;
 
-    float theta = phi0 - PI/2 - phi;
+    if (alpha * phi < 0) {
+        theta = ABS(alpha) - ABS(phi);
+        if ((alpha > 0) && (phi < 0)) {
+            theta *= -1;
+        } else {
 
+        }
+    } else {
+        theta = ABS(alpha) + ABS(phi);
+        if ((alpha < 0) && (phi < 0)) {
+        } else {
+            theta *= -1;
+        }
+    }
     return theta;
 }
 

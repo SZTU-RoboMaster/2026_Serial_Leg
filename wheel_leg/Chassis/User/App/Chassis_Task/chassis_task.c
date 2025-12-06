@@ -459,7 +459,7 @@ static void controller_calc(void)
     /** 更新底盘变量 **/
     chassis_variable_update();
 
-    USART_Vofa_Justfloat_Transmit(chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0,chassis.leg_L.state_variable_feedback.theta,0);
+    USART_Vofa_Justfloat_Transmit(chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0,chassis.leg_R.state_variable_feedback.theta,0);
 
     /** 计算驱动轮力矩 **/
     wheel_calc();
