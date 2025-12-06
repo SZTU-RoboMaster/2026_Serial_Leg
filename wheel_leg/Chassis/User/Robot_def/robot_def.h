@@ -55,8 +55,8 @@
 #define MAX_CHASSIS_VX_SPEED 2.1f
 #define MAX_WHEEL_TORQUE 3.0f
 #define MIN_WHEEL_TORQUE (-3.0f)
-#define MAX_JOINT_TORQUE 3.0f
-#define MIN_JOINT_TORQUE (-3.0f)
+#define MAX_JOINT_TORQUE 10.0f // 1.0f 40.0f
+#define MIN_JOINT_TORQUE (-10.0f) // -1.0f -40.0f
 
 /** 遥控器值映射 **/
 #define RC_TO_VX  (MAX_CHASSIS_VX_SPEED/660)
@@ -252,6 +252,7 @@ typedef struct{// 五连杆中的角度
     float d_phi0;// 摆角变化速度
     float last_d_phi0;
     float dd_phi0;
+
 } FKPhi;
 
 typedef struct{// 五连杆中的点坐标(Coordinates)

@@ -264,3 +264,18 @@ float Get_OLS_Smooth(Ordinary_Least_Squares_t *OLS)
 {
     return OLS->k * OLS->x[OLS->Order - 1] + OLS->b;
 }
+
+/**
+ * @brief 将 [-PI, PI] 映射为 [0, 2PI]
+ * @param angle 原始角度（范围：-PI ~ PI）
+ * @return 映射后角度（0 ~ 2PI）
+ */
+float angle_map(float angle)
+{
+    // 处理负数角度：
+    if (angle < 0.0f) {
+        return angle + 2*PI;
+    }
+    // 正数/0 直接返回：0→0，90→90，180→180
+    return angle;
+}

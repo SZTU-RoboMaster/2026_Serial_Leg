@@ -18,22 +18,12 @@ extern ChassisPhysicalConfig chassis_physical_config;
  *    phi1                      phi1
  */
 
-float LF_test = 0;
-float LB_test = 0;
-float RF_test = 0;
-float RB_test = 0;
-
 void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
 
     float LF_joint_pos = (get_joint_motors() + 0)->pos_r;
     float LB_joint_pos = (get_joint_motors() + 1)->pos_r;
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
-
-    LF_test = LF_joint_pos;
-    LB_test = LB_joint_pos;
-    RF_test = RF_joint_pos;
-    RB_test = RB_joint_pos;
 
     leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos;
     leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos;
@@ -44,23 +34,9 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
 
 /** 计算状态变量theta **/
 float cal_leg_theta(float phi0, float phi) {
-    float theta = 0, alpha = 0;//alpha is the Angle at which the virtual joint motor is turned
-    alpha = PI / 2 - phi0;
 
-    if (alpha * phi < 0) {
-        theta = ABS(alpha) - ABS(phi);
-        if ((alpha > 0) && (phi < 0)) {
-            theta *= -1;
-        } else {
+    float theta = phi0 - PI/2 - phi;
 
-        }
-    } else {
-        theta = ABS(alpha) + ABS(phi);
-        if ((alpha < 0) && (phi < 0)) {
-        } else {
-            theta *= -1;
-        }
-    }
     return theta;
 }
 
@@ -68,6 +44,7 @@ float cal_leg_theta(float phi0, float phi) {
 static void forward_kinematics(Leg* leg_L, Leg* leg_R, ChassisPhysicalConfig *physical_config) {
     /***LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L LEG_L***/
 
+    /** phi2 **/
     leg_L->vmc.forward_kinematics.fk_point_coordinates.b_x = physical_config->l1 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi1);
     leg_L->vmc.forward_kinematics.fk_point_coordinates.b_y = physical_config->l1 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi1);
     leg_L->vmc.forward_kinematics.fk_point_coordinates.d_x = physical_config->l5 + physical_config->l4 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi4);
@@ -84,12 +61,16 @@ static void forward_kinematics(Leg* leg_L, Leg* leg_R, ChassisPhysicalConfig *ph
     float x = L_A0 + L_C0;
     leg_L->vmc.forward_kinematics.fk_phi.phi2 = 2.0f * atan2f(y, x);
 
+    /** C点坐标 **/
     leg_L->vmc.forward_kinematics.fk_point_coordinates.c_x = physical_config->l1 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi1) + physical_config->l2 * cosf(leg_L->vmc.forward_kinematics.fk_phi.phi2);
     leg_L->vmc.forward_kinematics.fk_point_coordinates.c_y = physical_config->l1 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi1) + physical_config->l2 * sinf(leg_L->vmc.forward_kinematics.fk_phi.phi2);
+
+    /** phi3 **/
     y = leg_L->vmc.forward_kinematics.fk_point_coordinates.c_y - leg_L->vmc.forward_kinematics.fk_point_coordinates.d_y;
     x = leg_L->vmc.forward_kinematics.fk_point_coordinates.c_x - leg_L->vmc.forward_kinematics.fk_point_coordinates.d_x;
     leg_L->vmc.forward_kinematics.fk_phi.phi3 = atan2f(y, x);
 
+    /** 腿长(L0) **/
     temp =  (leg_L->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f) * (leg_L->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
             + leg_L->vmc.forward_kinematics.fk_point_coordinates.c_y * leg_L->vmc.forward_kinematics.fk_point_coordinates.c_y;
     leg_L->vmc.forward_kinematics.fk_L0.L0_last = leg_L->vmc.forward_kinematics.fk_L0.L0;
@@ -102,6 +83,7 @@ static void forward_kinematics(Leg* leg_L, Leg* leg_R, ChassisPhysicalConfig *ph
             (leg_L->vmc.forward_kinematics.fk_L0.L0_dot - leg_L->vmc.forward_kinematics.fk_L0.L0_dot_last)
             / (CHASSIS_PERIOD * 0.001f);
 
+    /** 腿摆角（phi0） **/
     leg_L->vmc.forward_kinematics.fk_phi.last_phi0 = leg_L->vmc.forward_kinematics.fk_phi.phi0;
     y = leg_L->vmc.forward_kinematics.fk_point_coordinates.c_y;
     x = leg_L->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f;
@@ -112,6 +94,7 @@ static void forward_kinematics(Leg* leg_L, Leg* leg_R, ChassisPhysicalConfig *ph
     leg_L->vmc.forward_kinematics.fk_phi.dd_phi0 =  (leg_L->vmc.forward_kinematics.fk_phi.d_phi0 - leg_L->vmc.forward_kinematics.fk_phi.last_d_phi0)
                                                     / (CHASSIS_PERIOD * 0.001f);
 
+    /** ? **/
     leg_L->vmc.forward_kinematics.d_alpha = 0.0f - leg_L->vmc.forward_kinematics.fk_phi.d_phi0;
 
     /***LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R LEG_R***/
