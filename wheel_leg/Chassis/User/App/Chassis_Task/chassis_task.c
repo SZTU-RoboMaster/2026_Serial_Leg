@@ -320,68 +320,21 @@ static void wheel_calc(void)
                                          chassis.imu_reference.yaw_gyro,
                                          target_yaw_speed);
 
+      /** 板凳模型 **/
+    chassis.leg_L.wheel_torque =   wheel_K[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
+                                 + wheel_K[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+                                 - wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+                                 - wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+                                 - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+                                 - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
-    /** theta √ **/
-//    chassis.leg_L.wheel_torque = - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
-//                                 - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
-//
-//    chassis.leg_R.wheel_torque = - wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
-//                                 - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
+    chassis.leg_R.wheel_torque =   wheel_K[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
+                                 + wheel_K[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                                 - wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
+                                 - wheel_K[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+                                 - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+                                 - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
-    /** x √ **/
-//    chassis.leg_L.wheel_torque =   wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
-//                                 + wheel_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s);
-//
-//    chassis.leg_R.wheel_torque =   wheel_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
-//                                 + wheel_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s);
-
-    /** pitch √ **/
-//    chassis.leg_L.wheel_torque = - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
-//
-//    chassis.leg_R.wheel_torque = - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-
-    /** All **/
-//    chassis.leg_L.wheel_torque = - wheel_K[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
-//                                 - wheel_K[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
-//                                 - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
-//
-//    chassis.leg_R.wheel_torque = - wheel_K[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
-//                                 - wheel_K[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
-//                                 - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-
-//    chassis.leg_L.wheel_torque =   -wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
-//                                 - wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-//                                 - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
-//
-//    chassis.leg_R.wheel_torque =   -wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
-//                                 - wheel_K[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-//                                 - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-//                                 - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-
-      /** 尝试板凳模型平衡 **/
-    chassis.leg_L.wheel_torque =   - wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
-                                   - wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-                                   - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-                                   - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
-
-    chassis.leg_R.wheel_torque =   - wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
-                                   - wheel_K[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-                                   - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-                                   - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-       /*******************/
-
-       /** 前进后退方向正确 **/
-//    chassis.leg_L.wheel_torque =     wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
-//                                     + wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s);
-//
-//    chassis.leg_R.wheel_torque =     wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
-//                                     + wheel_K[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s);
-       /*******************/
 
 //    chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
 //    chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
