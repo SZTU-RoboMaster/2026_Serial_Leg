@@ -321,23 +321,23 @@ static void wheel_calc(void)
                                          target_yaw_speed);
 
       /** °åµÊÄ£ÐÍ **/
-    chassis.leg_L.wheel_torque =   wheel_K[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
-                                 + wheel_K[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
-                                 - wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+    chassis.leg_L.wheel_torque = - wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
                                  - wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                                  - wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
                                  - wheel_K[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
-    chassis.leg_R.wheel_torque =   wheel_K[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
-                                 + wheel_K[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
-                                 - wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
+    USART_Vofa_Justfloat_Transmit(wheel_K[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f),wheel_K[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s),wheel_K[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f));
+
+
+    chassis.leg_R.wheel_torque = - wheel_K[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
                                  - wheel_K[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                                  - wheel_K[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
                                  - wheel_K[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
+      /*************/
+    chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
+    chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
 
-//    chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
-//    chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
     chassis.leg_L.wheel_torque *= -1;
 
     VAL_LIMIT(chassis.leg_L.wheel_torque, MIN_WHEEL_TORQUE, MAX_WHEEL_TORQUE);
@@ -574,8 +574,6 @@ void chassis_task(void)
                         speed);
 
 //    temp_send_wheel_torque(0,0);
-
-    USART_Vofa_Justfloat_Transmit(chassis.leg_L.wheel_torque,chassis.leg_R.wheel_torque,0);
 
     temp_send_wheel_torque(chassis.leg_L.wheel_torque,chassis.leg_R.wheel_torque);
 
