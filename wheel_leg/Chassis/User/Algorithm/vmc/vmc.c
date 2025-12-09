@@ -25,13 +25,10 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
 
-
-    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos;
-    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.06f;
+    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos - 0.041f;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.11f;
     leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos;
     leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos;
-
-//    USART_Vofa_Justfloat_Transmit(leg_L->vmc.forward_kinematics.fk_phi.phi1,leg_L->vmc.forward_kinematics.fk_phi.phi4,0);
 }
 
 /** ¼ÆËã×´Ì¬±äÁ¿theta **/

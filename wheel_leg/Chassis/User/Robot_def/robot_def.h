@@ -50,7 +50,9 @@
 #define CHASSIS_LEG_CHANNEL 2
 
 /** 变量约束 **/
-#define MIN_L0 0.05f
+#define MIN_L0 0.16f
+#define MID_L0 0.24f
+#define MAX_L0 0.30f
 
 #define MAX_CHASSIS_VX_SPEED 2.1f
 #define MAX_WHEEL_TORQUE 3.0f
@@ -97,21 +99,21 @@
 /** Joint **/
 
 // 防劈叉PID
-#define CHASSIS_LEG_COORDINATION_PID_P 50.0f // 20.0f 30.0f
+#define CHASSIS_LEG_COORDINATION_PID_P 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
-#define CHASSIS_LEG_COORDINATION_PID_D 5.0f // 1.0f 5.0f
+#define CHASSIS_LEG_COORDINATION_PID_D 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 10.0f
 
 // 腿长位置环PID
-#define CHASSIS_LEG_L0_POS_PID_P 15.0f
+#define CHASSIS_LEG_L0_POS_PID_P 6.0f
 #define CHASSIS_LEG_L0_POS_PID_I 0.0f
 #define CHASSIS_LEG_L0_POS_PID_D 0.0f
 #define CHASSIS_LEG_L0_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 2.0f
 
 // 腿长速度环PID
-#define CHASSIS_LEG_L0_SPEED_PID_P 30.0f
+#define CHASSIS_LEG_L0_SPEED_PID_P 50.0f
 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_D 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
@@ -125,7 +127,7 @@
 #define CHASSIS_OFFGROUND_L0_PID_OUT_LIMIT 0.0f
 
 // Roll补偿PID
-#define CHASSIS_ROLL_PID_P 500.0f
+#define CHASSIS_ROLL_PID_P 10.0f
 #define CHASSIS_ROLL_PID_I 0.0f
 #define CHASSIS_ROLL_PID_D 0.0f
 #define CHASSIS_ROLL_PID_IOUT_LIMIT 0.0f
@@ -173,8 +175,9 @@ typedef struct{
     float v_m_per_s; // 期望速度
     float yaw_rad;
     float roll_rad;
-    float height_m; // 期望腿长
     float spin_speed;
+
+    float target_length; // 期望腿长
 
 } ChassisCtrlInfo;
 
@@ -440,13 +443,7 @@ typedef struct{
 
     // Roll补偿PID
     Pid chassis_roll_pid;
-
-    // 机体状态
-    ChassisBodyState chassis_body_state;
-
-    ChassisFallLegState chassis_fall_leg_state;
-
-    ChassisRecoverState chassis_recover_state;
+    float roll_compensatory_torque; // Roll补偿力矩
 
     // flag
     bool init_flag;            // 底盘初始化完成标志位

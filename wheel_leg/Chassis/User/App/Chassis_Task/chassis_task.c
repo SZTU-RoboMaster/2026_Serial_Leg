@@ -15,6 +15,17 @@
 #include "bsp_dwt.h"
 #include "vofa.h"
 
+bool joint_enable_flag = false; // 确保初始化任务时关节使能函数只执行一次
+bool left_leg_need_reset = false;
+bool right_leg_need_reset = false;
+
+float L_Kd = 0;
+float L_Speed = 0;
+
+float R_Kd = 0;
+float R_Speed = 0;
+
+
 
 /** 底盘pid初始化 **/
 static void chassis_pid_init() {
@@ -124,89 +135,15 @@ void chassis_init(void)
     xvEstimateKF_Init(&vaEstimateKF);
 }
 
-/** 底盘自起状态判断 **/
-static void chassis_recover_state_check(void) {
-
-    if(chassis.chassis_recover_finish == false)
-    {
-        // 机体姿态检测
-        if (ABS(chassis.imu_reference.pitch_rad) <= NOT_BALANCE_RAD) {
-            chassis.chassis_body_state = CHASSIS_BODY_NORMAL;
-        } else {
-            chassis.chassis_body_state = CHASSIS_BODY_UNNORMAL;
-        }
-
-        // 判断倒地时的腿倾角姿态
-        if((ABS(chassis.leg_L.state_variable_feedback.theta) <= LEG_NORMAL_RAD)
-           && (ABS(chassis.leg_R.state_variable_feedback.theta) <= LEG_NORMAL_RAD))
-        {
-            chassis.chassis_fall_leg_state = CHASSIS_FALL_LEG_NORMAL;
-        }
-        else
-        {
-            chassis.chassis_fall_leg_state = CHASSIS_FALL_LEG_UNNORMAL;
-        }
-
-        // 倒地自起判断
-        // 倒地时，只有当腿倾角处于正常范围才允许自起
-        if(chassis.chassis_fall_leg_state == CHASSIS_FALL_LEG_NORMAL)
-        {
-            chassis.chassis_recover_state = CHASSIS_COULD_RECOVER;
-        }
-        else
-        {
-            chassis.chassis_recover_state = CHASSIS_COULD_NOT_RECOVER;
-        }
-
-    }
-}
-
-
 /** 底盘倒地自救 **/
 static void chassis_selfhelp(void)
 {
-    chassis_recover_state_check();
+    /** 检测是否需要自救 **/
+    
 
-    if(chassis.chassis_recover_finish == false)
-    {
-        chassis.leg_L.joint_B_torque = 0.0f;
-        chassis.leg_L.joint_F_torque = 0.0f;
-        chassis.leg_R.joint_B_torque = 0.0f;
-        chassis.leg_R.joint_F_torque = 0.0f;
 
-        if(chassis.chassis_recover_state == CHASSIS_COULD_RECOVER)
-        {
-            Kd = 0.0f;
-            vel = 0.0f;
-        }
-        else
-        {
-            chassis.leg_L.wheel_torque = 0;
-            chassis.leg_R.wheel_torque = 0;
+    /** 倒地自救尚未完成 **/
 
-            // 腿复位
-            if(chassis.imu_reference.pitch_rad < 0.0f)
-            {
-                Kd = 3.0f;
-                vel = -2.0f;
-            }
-            else
-            {
-                Kd = 3.0f;
-                vel = 2.0f;
-            }
-
-        }
-    }
-
-    if(ABS(chassis.imu_reference.pitch_rad) <= RECOVER_RAD)
-    {
-        chassis.chassis_recover_finish = true;
-    }
-    else if(ABS(chassis.imu_reference.pitch_rad) >= NOT_BALANCE_RAD)
-    {
-        chassis.chassis_recover_finish = false;
-    }
 }
 
 /** 获取底盘传感器数据 **/
@@ -321,21 +258,37 @@ static void wheel_calc(void)
                                          target_yaw_speed);
 
       /** 板凳模型 **/
-    chassis.leg_L.wheel_torque = - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+    chassis.leg_L.wheel_torque = - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
+                                 - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+                                 - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
                                  - wheel_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                                  - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
                                  - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
-    chassis.leg_R.wheel_torque = - wheel_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
+    chassis.leg_R.wheel_torque = - wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
+                                 - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                                 - wheel_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
                                  - wheel_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                                  - wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
                                  - wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
+
+
+//    chassis.leg_L.wheel_torque = - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+//                                 - wheel_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+//                                 - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+//                                 - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+//
+//    chassis.leg_R.wheel_torque = - wheel_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
+//                                 - wheel_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+//                                 - wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+//                                 - wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
       /*************/
 
     chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
     chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
 
+    // 左右侧旋转方向相反 模型轮力矩逆时针为正
     chassis.leg_L.wheel_torque *= -1;
 
     VAL_LIMIT(chassis.leg_L.wheel_torque, MIN_WHEEL_TORQUE, MAX_WHEEL_TORQUE);
@@ -354,9 +307,18 @@ static void joint_calc(void)
 
     /** Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp Tp **/
 
-    /****** 防劈叉pid ******/
-    chassis.steer_compensatory_torque =  CHASSIS_LEG_COORDINATION_PID_P * (0.0f - chassis.phi0_error)
-                                         + CHASSIS_LEG_COORDINATION_PID_D * (0.0f - chassis.d_phi0_error); // 注意微分项正负
+    if(chassis.chassis_ctrl_mode == CHASSIS_INIT)
+    {
+        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  0.0f;
+        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  0.0f;
+    }
+    else
+    {
+
+
+        /****** 防劈叉pid ******/
+        chassis.steer_compensatory_torque =  CHASSIS_LEG_COORDINATION_PID_P * (0.0f - chassis.phi0_error)
+                                             + CHASSIS_LEG_COORDINATION_PID_D * (0.0f - chassis.d_phi0_error); // 注意微分项正负
 
 //    //Left
 //    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
@@ -374,16 +336,39 @@ static void joint_calc(void)
 //                                                                         + joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
 //                                                                         + joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
-//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
-//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
 
-    //Left
-    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
-                                                                         - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
+        /** theta √ **/
+//        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
+//                                                                             - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
+//
+//
+//        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
+//                                                                             - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
 
-    //Right
-    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
-                                                                         - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
+        /** phi √ **/
+//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+//                                                                       - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+//
+//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  -joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+//                                                                       - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
+
+        /** theta + phi **/
+    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  - joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
+                                                                         - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+                                                                         - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+                                                                         - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+
+
+    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  - joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
+                                                                         - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                                                                         - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+                                                                         - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
+
+//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  0.0f;
+//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  0.0f;
+
+        /** 不要在Tp层面修改左右侧旋转方向相反这个问题 因为解算出来加到电机上的力矩是对的 **/
+    }
 
     /** End End End End End End End End End End End End End End End End End End End End End End End End **/
 
@@ -394,11 +379,11 @@ static void joint_calc(void)
 
     float L_L0_dot_set = pid_calc(&chassis.leg_L.leg_pos_pid,
                                   chassis.leg_L.vmc.forward_kinematics.fk_L0.L0,
-                                  chassis.chassis_ctrl_info.height_m);
+                                  chassis.chassis_ctrl_info.target_length);
 
     float R_L0_dot_set = pid_calc(&chassis.leg_R.leg_pos_pid,
                                   chassis.leg_R.vmc.forward_kinematics.fk_L0.L0,
-                                  chassis.chassis_ctrl_info.height_m);
+                                  chassis.chassis_ctrl_info.target_length);
 
     pid_calc(&chassis.leg_L.leg_speed_pid,
              chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot,
@@ -414,18 +399,53 @@ static void joint_calc(void)
 //             chassis.imu_reference.roll_rad,
 //             chassis.chassis_ctrl_info.roll_rad);
 
+    chassis.roll_compensatory_torque =  CHASSIS_ROLL_PID_P * (0.0f - chassis.imu_reference.roll_rad)
+                                      + CHASSIS_ROLL_PID_D * (0.0f - chassis.imu_reference.roll_gyro); // 注意微分项正负
 
-//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_L.state_variable_feedback.theta)
-//                                                                         + chassis.leg_L.leg_speed_pid.out;
-//
-//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_R.state_variable_feedback.theta)
-//                                                                         + chassis.leg_R.leg_speed_pid.out;
-//
-//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point += chassis.chassis_roll_pid.out;
-//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point -= chassis.chassis_roll_pid.out;
+    USART_Vofa_Justfloat_Transmit(chassis.imu_reference.roll_rad,chassis.roll_compensatory_torque,0);
 
-    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
-    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
+    /** 确保初始化模式下腿伸直 **/
+    if(chassis.chassis_ctrl_mode == CHASSIS_INIT)
+    {
+        // 左腿需要复位 则让前馈把腿伸直
+        if(left_leg_need_reset)
+        {
+            chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY;
+        }
+        else
+        {
+            chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0;
+        }
+
+        if(right_leg_need_reset)
+        {
+            chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY;
+        }
+        else
+        {
+            chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0;
+        }
+    }
+    else // 使能模式
+    {
+//        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  chassis.leg_L.leg_speed_pid.out;
+//
+//        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  chassis.leg_R.leg_speed_pid.out;
+
+        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_L.state_variable_feedback.theta)
+                                                                             + chassis.leg_L.leg_speed_pid.out;
+
+        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =  0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_R.state_variable_feedback.theta)
+                                                                             + chassis.leg_R.leg_speed_pid.out;
+
+        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point += chassis.roll_compensatory_torque;
+        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point -= chassis.roll_compensatory_torque;
+    }
+
+
+
+//    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
+//    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
 
     /** End End End End End End End End End End End End End End End End End End End End End End End End **/
 
@@ -440,34 +460,12 @@ static void joint_calc(void)
     chassis.leg_R.joint_B_torque = chassis.leg_R.vmc.forward_kinematics.T1_T4_set_point.E.T4_set_point;//B
 
     // 输出限幅
-    VAL_LIMIT(chassis.leg_R.joint_F_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
-    VAL_LIMIT(chassis.leg_R.joint_B_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
     VAL_LIMIT(chassis.leg_L.joint_F_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
     VAL_LIMIT(chassis.leg_L.joint_B_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
+    VAL_LIMIT(chassis.leg_R.joint_F_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
+    VAL_LIMIT(chassis.leg_R.joint_B_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
 
 }
-
-/** 控制器计算 **/
-static void controller_calc(void)
-{
-    /** 更新五连杆参数 **/
-    vmc_calc();
-
-    /** 速度融合 **/
-    speed_calc();
-
-    /** 更新底盘变量 **/
-    chassis_variable_update();
-
-    USART_Vofa_Justfloat_Transmit(chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0,chassis.leg_R.state_variable_feedback.theta,0);
-
-    /** 计算驱动轮力矩 **/
-    wheel_calc();
-
-    /** 计算关节力矩 **/
-    joint_calc();
-}
-
 
 /*******************************************************************************
  *                                  Task                                       *
@@ -491,49 +489,126 @@ static void chassis_disable_task() {
 
     chassis.chassis_ctrl_info.yaw_rad = chassis.imu_reference.yaw_total_rad;
 
-    chassis.chassis_ctrl_info.height_m = MIN_L0;
-
-    // 底盘状态
-    chassis.chassis_body_state = CHASSIS_BODY_UNNORMAL;
-
-    chassis.chassis_fall_leg_state = CHASSIS_FALL_LEG_UNNORMAL;
-
-    chassis.chassis_recover_state = CHASSIS_COULD_NOT_RECOVER;
+    chassis.chassis_ctrl_info.target_length = MIN_L0;
 
     /** 初始化标志位 **/
 
     // 底盘初始化标志位
     chassis.init_flag = false;
+    joint_enable_flag = false;
 
     chassis.chassis_recover_finish = false;
+
+    left_leg_need_reset = false;
+    right_leg_need_reset = false;
+
+    L_Kd = 0;
+    L_Speed = 0;
+    R_Kd = 0;
+    R_Speed = 0;
+
 }
 
 /** 底盘初始化任务 **/
+float test = 0;
 static void chassis_init_task()
 {
-    joint_enable();
+    /** 使能关节 **/
+    if(!joint_enable_flag)
+    {
+        joint_enable();
 
-    chassis.init_flag = true;
+        joint_enable_flag = true;
+    }
+
+    /** 更新五连杆参数 **/
+    vmc_calc();
+
+    /** 更新底盘变量 **/
+    chassis_variable_update();
+
+    /** 驱动轮 **/
+    chassis.leg_L.wheel_torque = 0.0f;
+    chassis.leg_R.wheel_torque = 0.0f;
+
+    /** 关节 **/
+    if(chassis.leg_L.state_variable_feedback.theta < 0.0f)
+    {
+        left_leg_need_reset = true;
+        L_Kd = 3.0f;
+        L_Speed = -1.5f;
+    }
+    else
+    {
+        left_leg_need_reset = false;
+        L_Kd = 0.0f;
+        L_Speed = 0.0f;
+    }
+
+    if(chassis.leg_R.state_variable_feedback.theta < 0.0f)
+    {
+        right_leg_need_reset = true;
+        R_Kd = 3.0f;
+        R_Speed = 1.5f;
+    }
+    else
+    {
+        right_leg_need_reset = false;
+        R_Kd = 0.0f;
+        R_Speed = 0.0f;
+    }
+
+    joint_calc();
+
+    if((!left_leg_need_reset) && (!right_leg_need_reset))
+    {
+        chassis.init_flag = true;
+
+        // 初始化完毕后收腿
+//        chassis.chassis_ctrl_info.target_length = MIN_L0;
+        chassis.chassis_ctrl_info.target_length = MID_L0;
+    }
+    else
+    {
+        chassis.init_flag = false;
+    }
+
 }
 
 /** 底盘使能任务 **/
 static void chassis_enable_task(void)
 {
-    /** 控制器计算 **/
-    controller_calc();
+    /** 更新五连杆参数 **/
+    vmc_calc();
+
+    /** 速度融合 **/
+    speed_calc();
+
+    /** 更新底盘变量 **/
+    chassis_variable_update();
+
+    /** 计算驱动轮力矩 **/
+    wheel_calc();
+
+    /** 计算关节力矩 **/
+    joint_calc();
+
+    /** 倒地自救 **/
+    chassis_selfhelp();
 }
 
 /** 发送力矩任务 **/
 static void send_torque_task(float joint_LF_torque, float joint_LB_torque, float joint_RF_torque, float joint_RB_torque,
                              float wheel_L_torque, float wheel_R_torque,
-                             float vel, float Kd)
+                             float L_speed, float L_Kd,
+                             float R_speed, float R_Kd)
 {
     /** joint **/
-    set_dm8009p_MIT(&joint[LF],0.0f, vel, 0, Kd,joint_LF_torque);
-    set_dm8009p_MIT(&joint[LB],0.0f, vel, 0, Kd,joint_LB_torque);
+    set_dm8009p_MIT(&joint[LF],0.0f, L_speed, 0, L_Kd,joint_LF_torque);
+    set_dm8009p_MIT(&joint[LB],0.0f, L_speed, 0, L_Kd,joint_LB_torque);
     DWT_Delay(0.0002f);
-    set_dm8009p_MIT(&joint[RF],0.0f, -vel, 0, Kd,joint_RF_torque);
-    set_dm8009p_MIT(&joint[RB],0.0f, -vel, 0, Kd,joint_RB_torque);
+    set_dm8009p_MIT(&joint[RF],0.0f, R_speed, 0, R_Kd,joint_RF_torque);
+    set_dm8009p_MIT(&joint[RB],0.0f, R_speed, 0, R_Kd,joint_RB_torque);
 
     /** wheel **/
     int16_t L_wheel_data = wheel_L_torque * (1 / TORQUE_CONSTANT_3508) * DATA_PER_A;
@@ -581,8 +656,51 @@ void chassis_task(void)
         }
     }
 
+
 //    send_torque_task(chassis.leg_L.joint_F_torque,
 //                     chassis.leg_L.joint_B_torque,
+//                     -chassis.leg_R.joint_F_torque,
+//                     -chassis.leg_R.joint_B_torque,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f);
+
+//    send_torque_task(chassis.leg_L.joint_F_torque,
+//                     chassis.leg_L.joint_B_torque,
+//                     -chassis.leg_R.joint_F_torque,
+//                     -chassis.leg_R.joint_B_torque,
+//                     0.0f,
+//                     0.0f,
+//                     L_Speed,
+//                     L_Kd,
+//                     R_Speed,
+//                     R_Kd);
+
+//    send_torque_task(chassis.leg_L.joint_F_torque,
+//                     chassis.leg_L.joint_B_torque,
+//                     -chassis.leg_R.joint_F_torque,
+//                     -chassis.leg_R.joint_B_torque,
+//                     chassis.leg_L.wheel_torque,
+//                     chassis.leg_R.wheel_torque,
+//                     L_Speed,
+//                     L_Kd,
+//                     R_Speed,
+//                     R_Kd);
+
+//    send_torque_task(chassis.leg_L.joint_F_torque,
+//                     chassis.leg_L.joint_B_torque,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f);
+
+//    send_torque_task(0.0f,
+//                     0.0f,
 //                     -chassis.leg_R.joint_F_torque,
 //                     -chassis.leg_R.joint_B_torque,
 //                     0.0f,
@@ -597,7 +715,20 @@ void chassis_task(void)
 //                     chassis.leg_L.wheel_torque,
 //                     chassis.leg_R.wheel_torque,
 //                     0.0f,
+//                     0.0f,
+//                     0.0f,
 //                     0.0f);
+
+//    send_torque_task(0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     0.0f,
+//                     L_Speed,
+//                     L_Kd,
+//                     R_Speed,
+//                     R_Kd);
 
     send_torque_task(0.0f,
                      0.0f,
@@ -605,7 +736,9 @@ void chassis_task(void)
                      0.0f,
                      0.0f,
                      0.0f,
-                     0.0f,
-                     0.0f);
+                     0,
+                     0,
+                     0,
+                     0);
 
 }

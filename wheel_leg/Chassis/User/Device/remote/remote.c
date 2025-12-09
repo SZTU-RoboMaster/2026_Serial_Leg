@@ -301,9 +301,8 @@ static void set_chassis_ctrl_info() {
     chassis.chassis_ctrl_info.yaw_rad -= (float) (get_rc_ctrl()->rc.ch[CHASSIS_YAW_CHANNEL]) * (-RC_TO_YAW_INCREMENT);
 
     /** 期望腿长 **/
-    chassis.chassis_ctrl_info.height_m += (float) (get_rc_ctrl()->rc.ch[CHASSIS_LEG_CHANNEL]) * 0.000005f;
-    VAL_LIMIT(chassis.chassis_ctrl_info.height_m, 0.05f, 0.18f);
-
+    chassis.chassis_ctrl_info.target_length += (float) (get_rc_ctrl()->rc.ch[CHASSIS_LEG_CHANNEL]) * 0.000005f;
+    VAL_LIMIT(chassis.chassis_ctrl_info.target_length, MIN_L0, MAX_L0);
 }
 
 /** 底盘根据遥控器设置模式 **/
