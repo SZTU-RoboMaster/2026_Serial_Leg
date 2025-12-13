@@ -70,19 +70,6 @@
 
 /** Wheel **/
 
-//// 转向PID
-//#define CHASSIS_TURN_POS_PID_P 5.0f
-//#define CHASSIS_TURN_POS_PID_I 0.0f
-//#define CHASSIS_TURN_POS_PID_D 0.0f
-//#define CHASSIS_TURN_POS_PID_IOUT_LIMIT 0.0f
-//#define CHASSIS_TURN_POS_PID_OUT_LIMIT 3.0f
-//
-//#define CHASSIS_TURN_SPEED_PID_P 10.0f
-//#define CHASSIS_TURN_SPEED_PID_I 0.0f
-//#define CHASSIS_TURN_SPEED_PID_D 0.0f
-//#define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
-//#define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 4.0f
-
 // 转向PID
 #define CHASSIS_TURN_POS_PID_P 3.0f
 #define CHASSIS_TURN_POS_PID_I 0.0f
@@ -97,9 +84,8 @@
 #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 3.0f
 
 /** Joint **/
-
 // 防劈叉PID
-#define CHASSIS_LEG_COORDINATION_PID_P 0.0f
+#define CHASSIS_LEG_COORDINATION_PID_P 10.0f
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_D 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
@@ -127,7 +113,7 @@
 #define CHASSIS_OFFGROUND_L0_PID_OUT_LIMIT 0.0f
 
 // Roll补偿PID
-#define CHASSIS_ROLL_PID_P 10.0f
+#define CHASSIS_ROLL_PID_P 400.0f
 #define CHASSIS_ROLL_PID_I 0.0f
 #define CHASSIS_ROLL_PID_D 0.0f
 #define CHASSIS_ROLL_PID_IOUT_LIMIT 0.0f
@@ -173,6 +159,7 @@ typedef enum{
 
 typedef struct{
     float v_m_per_s; // 期望速度
+    float target_x; // 期望位移
     float yaw_rad;
     float roll_rad;
     float spin_speed;

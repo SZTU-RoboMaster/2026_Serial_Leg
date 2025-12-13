@@ -294,15 +294,19 @@ static void chassis_device_offline_handle() {
 static void set_chassis_ctrl_info() {
 
     /** 期望速度 -- 简易斜坡函数 **/
+    chassis.chassis_ctrl_info.v_m_per_s = 0.0f;
+
+    /** 期望位移 **/
     float vel_temp = (float) (rc_ctrl.rc.ch[CHASSIS_VX_CHANNEL]) * RC_TO_VX;
-    slope_following(&vel_temp,&chassis.chassis_ctrl_info.v_m_per_s,0.05f);
+    chassis.chassis_ctrl_info.target_x += vel_temp * (CHASSIS_PERIOD * 0.001f);
 
     /** 转向 **/
     chassis.chassis_ctrl_info.yaw_rad -= (float) (get_rc_ctrl()->rc.ch[CHASSIS_YAW_CHANNEL]) * (-RC_TO_YAW_INCREMENT);
 
     /** 期望腿长 **/
-    chassis.chassis_ctrl_info.target_length += (float) (get_rc_ctrl()->rc.ch[CHASSIS_LEG_CHANNEL]) * 0.000005f;
-    VAL_LIMIT(chassis.chassis_ctrl_info.target_length, MIN_L0, MAX_L0);
+    chassis.chassis_ctrl_info.target_length = MID_L0;
+//    chassis.chassis_ctrl_info.target_length += (float) (get_rc_ctrl()->rc.ch[CHASSIS_LEG_CHANNEL]) * 0.000005f;
+//    VAL_LIMIT(chassis.chassis_ctrl_info.target_length, MIN_L0, MAX_L0);
 }
 
 /** 底盘根据遥控器设置模式 **/
