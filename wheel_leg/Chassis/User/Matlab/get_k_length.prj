@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.coder" plugin-version="R2021a">
-  <configuration file="D:\GitHub\Code\HJ\wheel_leg\wheel-legged-infantry-master\User\Matlab\get_k_length.prj" location="D:\GitHub\Code\HJ\wheel_leg\wheel-legged-infantry-master\User\Matlab" name="get_k_length" target="target.unifiedcoder" target-name="MATLAB Coder">
+  <configuration file="D:\GitHub\Code\2026_Serial_Leg\wheel_leg\Chassis\User\Matlab\get_k_length.prj" location="D:\GitHub\Code\2026_Serial_Leg\wheel_leg\Chassis\User\Matlab" name="get_k_length" target="target.unifiedcoder" target-name="MATLAB Coder">
     <profile key="profile.mex">
       <param.BuiltInstrumentedMex />
       <param.RanInstrumentedMex />
@@ -275,11 +275,11 @@
       <param.CustomLibrary />
       <param.PostCodeGenCommand />
       <param.TargetLangStandard>Auto</param.TargetLangStandard>
-      <param.CodeReplacementLibrary>None</param.CodeReplacementLibrary>
+      <param.CodeReplacementLibrary />
       <param.DeprecatedCRLFlag />
       <param.SameHardware>true</param.SameHardware>
       <param.Toolchain>Automatically locate an installed toolchain</param.Toolchain>
-      <param.BuildConfiguration>Faster Runs</param.BuildConfiguration>
+      <param.BuildConfiguration />
       <param.CustomToolchainOptions />
       <var.ToolchainSettingsVisible />
       <param.target.Data>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;ctdata&gt;&lt;configuredHardware/&gt;&lt;/ctdata&gt;</param.target.Data>
@@ -605,7 +605,7 @@
     <var.cfi.preBuildChecksum />
     <var.outdatedOnRestore />
     <var.lastUserSourceChecksum />
-    <var.sourceSetState>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;sourceModel&gt;&lt;primarySourceFiles&gt;&lt;file&gt;D:\GitHub\Code\HJ\wheel_leg\wheel-legged-infantry-master\User\Matlab\get_k_length.m&lt;/file&gt;&lt;/primarySourceFiles&gt;&lt;fixedPointSourceFiles/&gt;&lt;fixedPointSourceRegistered&gt;false&lt;/fixedPointSourceRegistered&gt;&lt;fixedPointSourceSelected&gt;false&lt;/fixedPointSourceSelected&gt;&lt;/sourceModel&gt;</var.sourceSetState>
+    <var.sourceSetState>&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;&lt;sourceModel&gt;&lt;primarySourceFiles&gt;&lt;file&gt;D:\GitHub\Code\2026_Serial_Leg\wheel_leg\Chassis\User\Matlab\get_k_length.m&lt;/file&gt;&lt;/primarySourceFiles&gt;&lt;fixedPointSourceFiles/&gt;&lt;fixedPointSourceRegistered&gt;false&lt;/fixedPointSourceRegistered&gt;&lt;fixedPointSourceSelected&gt;false&lt;/fixedPointSourceSelected&gt;&lt;/sourceModel&gt;</var.sourceSetState>
     <param.forceMexBuild>false</param.forceMexBuild>
     <param.NoDefaultJIT />
     <param.configImportActive>false</param.configImportActive>
@@ -630,7 +630,7 @@
     <param.CppGenerateEnumClass />
     <param.gpu.Enabled>false</param.gpu.Enabled>
     <param.gpu.SelectCudaDevice />
-    <param.gpu.ComputeCapability>3.5</param.gpu.ComputeCapability>
+    <param.gpu.ComputeCapability />
     <param.gpu.CustomComputeCapability />
     <param.gpu.MallocMode>discrete</param.gpu.MallocMode>
     <param.gpu.MallocThreshold />
@@ -867,7 +867,7 @@
       <file>${PROJECT_ROOT}\get_k_length.m</file>
     </fileset.inputtypes>
     <build-deliverables>
-      <file location="${PROJECT_ROOT}\codegen\lib\get_k_length" name="get_k_length.lib" optional="false">D:\GitHub\Code\HJ\wheel_leg\wheel-legged-infantry-master\User\Matlab\codegen\lib\get_k_length\get_k_length.lib</file>
+      <file location="${PROJECT_ROOT}\codegen\lib\get_k_length" name="get_k_length.lib" optional="false">D:\GitHub\Code\2026_Serial_Leg\wheel_leg\Chassis\User\Matlab\codegen\lib\get_k_length\get_k_length.lib</file>
     </build-deliverables>
     <workflow />
     <matlab>

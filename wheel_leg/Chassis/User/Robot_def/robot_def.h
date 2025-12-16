@@ -34,13 +34,6 @@
 // 旋转速度
 #define SPIN_SPEED 5.0f
 
-// 机体倾角
-#define NOT_BALANCE_RAD 13.0f * DEGREE_TO_RAD
-#define RECOVER_RAD 5.0f * DEGREE_TO_RAD
-
-// 腿摆角
-#define LEG_NORMAL_RAD 30.0f * DEGREE_TO_RAD
-
 /** 遥控器路径 **/
 // x : 2-左手 ; 0-右手
 // y : 3-左手 ; 1-右手
@@ -159,7 +152,6 @@ typedef enum{
 
 typedef struct{
     float v_m_per_s; // 期望速度
-    float target_x; // 期望位移
     float yaw_rad;
     float roll_rad;
     float spin_speed;

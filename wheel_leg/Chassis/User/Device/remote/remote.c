@@ -293,12 +293,8 @@ static void chassis_device_offline_handle() {
 /** 底盘接收遥控器信息 **/
 static void set_chassis_ctrl_info() {
 
-    /** 期望速度 -- 简易斜坡函数 **/
-    chassis.chassis_ctrl_info.v_m_per_s = 0.0f;
-
-    /** 期望位移 **/
-    float vel_temp = (float) (rc_ctrl.rc.ch[CHASSIS_VX_CHANNEL]) * RC_TO_VX;
-    chassis.chassis_ctrl_info.target_x += vel_temp * (CHASSIS_PERIOD * 0.001f);
+    /** 期望速度 **/
+    chassis.chassis_ctrl_info.v_m_per_s = (float) (rc_ctrl.rc.ch[CHASSIS_VX_CHANNEL]) * RC_TO_VX;;
 
     /** 转向 **/
     chassis.chassis_ctrl_info.yaw_rad -= (float) (get_rc_ctrl()->rc.ch[CHASSIS_YAW_CHANNEL]) * (-RC_TO_YAW_INCREMENT);
