@@ -3,6 +3,7 @@
 
 #include <stdint-gcc.h>
 
+#define RATIO 14.88 // 港科减速箱减速比
 #define TORQUE_CONSTANT_3508 0.2325f  // Nm/A 港科减速箱
 
 #define DATA_PER_A (16384 / 20)

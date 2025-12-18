@@ -25,10 +25,11 @@
 //#define LEG_22_B_POS 0.60f + (20 * DEGREE_TO_RAD)
 
 // 底盘运行周期
-#define CHASSIS_PERIOD 5 // ms 计算频率: 200Hz
+#define CHASSIS_PERIOD 2 // ms 计算频率: 500Hz 不宜过低
 
 #define BALANCE_POINT (-0.078f)
 
+#define RPM_TO_RAD_PER_S (PI/ 30) // (rad/s) = (rpm) * (pi/30)
 #define RPM_TO_M_PER_S (PI * chassis_physical_config.wheel_radius) / 30
 
 // 旋转速度
@@ -50,8 +51,8 @@
 #define MAX_CHASSIS_VX_SPEED 2.1f
 #define MAX_WHEEL_TORQUE 3.0f
 #define MIN_WHEEL_TORQUE (-3.0f)
-#define MAX_JOINT_TORQUE 10.0f // 1.0f 40.0f
-#define MIN_JOINT_TORQUE (-10.0f) // -1.0f -40.0f
+#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
+#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
 
 /** 遥控器值映射 **/
 #define RC_TO_VX  (MAX_CHASSIS_VX_SPEED/660)
@@ -70,7 +71,7 @@
 #define CHASSIS_TURN_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_TURN_POS_PID_OUT_LIMIT 2.0f
 
-#define CHASSIS_TURN_SPEED_PID_P 1.0f
+#define CHASSIS_TURN_SPEED_PID_P 2.0f
 #define CHASSIS_TURN_SPEED_PID_I 0.0f
 #define CHASSIS_TURN_SPEED_PID_D 0.0f
 #define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
@@ -78,9 +79,9 @@
 
 /** Joint **/
 // 防劈叉PID
-#define CHASSIS_LEG_COORDINATION_PID_P 10.0f
+#define CHASSIS_LEG_COORDINATION_PID_P 20.0f
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
-#define CHASSIS_LEG_COORDINATION_PID_D 0.0f
+#define CHASSIS_LEG_COORDINATION_PID_D 1.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 10.0f
 
@@ -92,7 +93,7 @@
 #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 2.0f
 
 // 腿长速度环PID
-#define CHASSIS_LEG_L0_SPEED_PID_P 50.0f
+#define CHASSIS_LEG_L0_SPEED_PID_P 30.0f
 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_D 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f

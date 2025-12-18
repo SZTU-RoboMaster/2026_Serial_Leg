@@ -58,33 +58,26 @@ static void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
 
 void speed_calc(void)
 {
-    static float w_l,w_r=0.0f;//左右驱动轮的角速度
-    static float v_lb,v_rb=0.0f;//通过左右驱动轮算出的机体速度
-    static float aver_v=0.0f;//通过取平均计算出机体速度
+    float w_l, w_r = 0.0f; // 左右驱动轮转子相对大地的的角速度
+    float v_l, v_r = 0.0f; // 左右驱动轮转子相对大地的的线速度
+    float v_lb, v_rb = 0.0f; // 左右驱动轮计算出的机体速度
 
-    // 以向前移动为正方向
+    float aver_v = 0.0f; // 机体速度平均值
 
-//    // 左边驱动轮转子相对大地角速度
-//    w_l = (-get_wheel_motors()->speed_rpm) * RPM_TO_M_PER_S + chassis.imu_reference.pitch_gyro + chassis.leg_L.vmc.forward_kinematics.d_alpha;
-//    // 轮毂相对于机体(b系)的速度
-//    v_lb = w_l * chassis_physical_config.wheel_radius + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_L.state_variable_feedback.theta_dot * arm_cos_f32(chassis.leg_L.state_variable_feedback.theta) + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot * arm_sin_f32(chassis.leg_L.state_variable_feedback.theta);
-//
-//    // 右边驱动轮转子相对大地角速度
-//    w_r = (get_wheel_motors() + 1)->speed_rpm * RPM_TO_M_PER_S + chassis.imu_reference.pitch_gyro + chassis.leg_R.vmc.forward_kinematics.d_alpha;
-//    // 轮毂相对于机体(b系)的速度
-//    v_rb = w_r * chassis_physical_config.wheel_radius + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_R.state_variable_feedback.theta_dot * arm_cos_f32(chassis.leg_R.state_variable_feedback.theta) + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0_dot * arm_sin_f32(chassis.leg_R.state_variable_feedback.theta);
-
-    // 左边驱动轮转子相对大地角速度
-    w_l = (-get_wheel_motors()->speed_rpm) * RPM_TO_M_PER_S;
+    // 左边驱动轮转子相对大地的角速度
+    w_l = ((-get_wheel_motors()->speed_rpm) / RATIO) * RPM_TO_RAD_PER_S + chassis.leg_L.vmc.forward_kinematics.fk_phi.d_phi0 - chassis.imu_reference.pitch_gyro;
     // 轮毂相对于机体(b系)的速度
-    v_lb = w_l * chassis_physical_config.wheel_radius;
+    v_l = w_l * chassis_physical_config.wheel_radius;
 
     // 右边驱动轮转子相对大地角速度
-    w_r = (get_wheel_motors() + 1)->speed_rpm * RPM_TO_M_PER_S;
+    w_r = ((get_wheel_motors() + 1)->speed_rpm / RATIO) * RPM_TO_RAD_PER_S + chassis.leg_R.vmc.forward_kinematics.fk_phi.d_phi0 - chassis.imu_reference.pitch_gyro;
     // 轮毂相对于机体(b系)的速度
-    v_rb = w_r * chassis_physical_config.wheel_radius;
+    v_r = w_r * chassis_physical_config.wheel_radius;
 
-    aver_v = (v_rb + v_lb) / 2.0f;//取平均
+    v_lb = v_l + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot * sinf(chassis.leg_L.state_variable_feedback.theta) + chassis.leg_L.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_L.state_variable_feedback.theta_dot * cosf(chassis.leg_L.state_variable_feedback.theta);
+    v_rb = v_r + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0_dot * sinf(chassis.leg_R.state_variable_feedback.theta) + chassis.leg_R.vmc.forward_kinematics.fk_L0.L0 * chassis.leg_R.state_variable_feedback.theta_dot * cosf(chassis.leg_R.state_variable_feedback.theta);
+
+    aver_v = (v_lb + v_rb) / 2;
 
     vel_acc[0] = aver_v;
 

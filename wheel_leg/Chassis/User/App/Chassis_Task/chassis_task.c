@@ -29,7 +29,7 @@ float L_Speed = 0;
 float R_Kd = 0;
 float R_Speed = 0;
 
-#define THETA_OFFSET (10.0f * DEGREE_TO_RAD)
+#define THETA_OFFSET (5.0f * DEGREE_TO_RAD)
 
 /** 底盘pid初始化 **/
 static void chassis_pid_init() {
@@ -164,6 +164,7 @@ static void get_IMU_info(void) {
 
     /** 更新各轴加速度和角速度 **/
     chassis.imu_reference.pitch_gyro = -INS.Gyro[Y];
+
     chassis.imu_reference.yaw_gyro = -INS.Gyro[Z];
     chassis.imu_reference.roll_gyro = INS.Gyro[X];
 
@@ -220,26 +221,16 @@ static void chassis_variable_update(void) {
     chassis.leg_R.state_variable_feedback.x_dot = vel_acc[0];
 
     //3.x
-    if(chassis.chassis_ctrl_info.v_m_per_s != 0.0f)
+    if((chassis.chassis_ctrl_info.v_m_per_s != 0.0f) || (chassis.chassis_ctrl_mode == CHASSIS_INIT))
     {
         chassis.leg_L.state_variable_feedback.x = 0.0f;
         chassis.leg_R.state_variable_feedback.x = 0.0f;
     }
     else
     {
-        if((ABS(chassis.leg_L.state_variable_feedback.x_dot) < 0.5f) && (ABS(chassis.leg_R.state_variable_feedback.x_dot) < 0.5f))
-        {
-            chassis.leg_L.state_variable_feedback.x += (CHASSIS_PERIOD * 0.001f) * chassis.leg_L.state_variable_feedback.x_dot;
-            chassis.leg_R.state_variable_feedback.x += (CHASSIS_PERIOD * 0.001f) * chassis.leg_R.state_variable_feedback.x_dot;
-        }
-        else
-        {
-            chassis.leg_L.state_variable_feedback.x = 0.0f;
-            chassis.leg_R.state_variable_feedback.x = 0.0f;
-        }
+        chassis.leg_L.state_variable_feedback.x += (CHASSIS_PERIOD * 0.001f) * chassis.leg_L.state_variable_feedback.x_dot;
+        chassis.leg_R.state_variable_feedback.x += (CHASSIS_PERIOD * 0.001f) * chassis.leg_R.state_variable_feedback.x_dot;
     }
-
-    USART_Vofa_Justfloat_Transmit(chassis.leg_L.state_variable_feedback.x,0,0);
 
     // 4.1 x_ddot
     chassis.leg_L.state_variable_feedback.x_dot_last = chassis.leg_L.state_variable_feedback.x_dot;
@@ -266,8 +257,6 @@ static void wheel_calc(void)
                                          chassis.imu_reference.yaw_gyro,
                                          target_yaw_speed);
 
-
-      /** 板凳模型 **/
     chassis.leg_L.wheel_torque = - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - THETA_OFFSET)
                                  - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
                                  - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
@@ -344,13 +333,6 @@ static void joint_calc(void)
                                                                              - joint_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                                                                              - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
                                                                              - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-
-//        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  - joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - THETA_OFFSET)
-//                                                                             - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
-//
-//
-//        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =  - joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET)
-//                                                                             - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
 
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
@@ -523,6 +505,8 @@ static void chassis_init_task()
     chassis_variable_update();
 
     /** 驱动轮 **/
+    chassis_K_matrix_fitting(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0, wheel_K_L, wheel_fitting_factor);
+    chassis_K_matrix_fitting(chassis.leg_R.vmc.forward_kinematics.fk_L0.L0, wheel_K_R, wheel_fitting_factor);
     chassis.leg_L.wheel_torque = 0.0f;
     chassis.leg_R.wheel_torque = 0.0f;
 
@@ -762,6 +746,5 @@ void chassis_task(void)
 //                     0,
 //                     0,
 //                     0);
-
 
 }

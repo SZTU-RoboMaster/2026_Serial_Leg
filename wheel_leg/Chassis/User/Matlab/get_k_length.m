@@ -1,4 +1,4 @@
-function K = get_k_length(leg_length)
+function K = get_k_length(leg_length,dt) % s
    
     %theta : 摆杆与竖直方向夹角             R   ：驱动轮半径
     %x     : 驱动轮位移                    L   : 摆杆重心到驱动轮轴距离
@@ -49,11 +49,23 @@ function K = get_k_length(leg_length)
     B=subs(B,[R,L,LM,l,mw,mp,M,Iw,Ip,IM,g],[R1,L1,LM1,l1,mw1,mp1,M1,Iw1,Ip1,IM1,9.8]);
     B=double(B);
 
+    % ===================== 连续→离散 =====================
+    sys = ss(A, B, eye(6), zeros(6,2));
+
+    % ZOH离散化
+    sys_d = c2d(sys, dt, 'zoh');        % 输入：连续系统、周期、方法
+
+    % 提取离散矩阵
+    A_d = sys_d.A;                      % 离散状态矩阵（6×6）
+    B_d = sys_d.B;                      % 离散输入矩阵（6×2）
+    % ==========================================================
+
+
 %     Q = diag([1 1 10 1 10 1]); % theta theta_dot x x_dot phi phi_dot
-    Q = diag([1 1 10 1 10 1]);
+    Q = diag([1 1 5 1 5000 1]);
 
     R = [1 0;0 0.25];
     
-    K = lqr(A,B,Q,R); % lqr函数返回一个 p x n 的矩阵
+    K = dlqr(A_d,B_d,Q,R); % lqr函数返回一个 p x n 的矩阵
   
 end
