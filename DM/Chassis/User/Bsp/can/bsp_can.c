@@ -1,5 +1,3 @@
-#include <stm32f4xx_hal.h>
-#include <stm32f4xx_hal_can.h>
 #include "bsp_can.h"
 
 #include "wheel.h"
@@ -8,177 +6,224 @@
 #include "DJI_motor.h"
 #include "vofa.h"
 
-/* 关节发送结构体 */
-CAN_TxFrame_TypeDef JointTxFrame = {
+/* 左侧关节发送结构体 */
+FDCAN_TxFrame_TypeDef LeftJointTxFrame = {
 
-        .hcan = &hcan1,
+        .hcan = &hfdcan1,
 
-        .Header.StdId = 0x00,
-        .Header.ExtId = 0,
-        .Header.IDE = CAN_ID_STD,
-        .Header.RTR = CAN_RTR_DATA,
-        .Header.DLC = 0x08,
-        .Header.TransmitGlobalTime = DISABLE,
+        .Header.Identifier = 0x00,
+        .Header.IdType = FDCAN_STANDARD_ID,
+        .Header.TxFrameType = FDCAN_DATA_FRAME,
+        .Header.DataLength = 8,
+        .Header.ErrorStateIndicator =  FDCAN_ESI_ACTIVE,
+        .Header.BitRateSwitch = FDCAN_BRS_OFF,
+        .Header.FDFormat =  FDCAN_CLASSIC_CAN,
+        .Header.TxEventFifoControl =  FDCAN_NO_TX_EVENTS,
+        .Header.MessageMarker = 0,
 };
 
-/* 轮毂发送结构体 */
-CAN_TxFrame_TypeDef WheelTxFrame = {
+/* 右侧关节发送结构体 */
+FDCAN_TxFrame_TypeDef RightJointTxFrame = {
 
-        .hcan = &hcan2,
+        .hcan = &hfdcan2,
 
-        .Header.StdId = 0x1FF,
-        .Header.ExtId = 0,
-        .Header.IDE = CAN_ID_STD,
-        .Header.RTR = CAN_RTR_DATA,
-        .Header.DLC = 0x08,
-        .Header.TransmitGlobalTime = DISABLE,
+        .Header.Identifier = 0x00,
+        .Header.IdType = FDCAN_STANDARD_ID,
+        .Header.TxFrameType = FDCAN_DATA_FRAME,
+        .Header.DataLength = 8,
+        .Header.ErrorStateIndicator =  FDCAN_ESI_ACTIVE,
+        .Header.BitRateSwitch = FDCAN_BRS_OFF,
+        .Header.FDFormat =  FDCAN_CLASSIC_CAN,
+        .Header.TxEventFifoControl =  FDCAN_NO_TX_EVENTS,
+        .Header.MessageMarker = 0,
 };
+
+/* 板间通信 + 轮毂 + Yaw控制发送结构体 */
+FDCAN_TxFrame_TypeDef Board_Yaw_Wheel_TxFrame = {
+
+        .hcan = &hfdcan3,
+
+        .Header.Identifier = 0x00,
+        .Header.IdType = FDCAN_STANDARD_ID,
+        .Header.TxFrameType = FDCAN_DATA_FRAME,
+        .Header.DataLength = 8,
+        .Header.ErrorStateIndicator =  FDCAN_ESI_ACTIVE,
+        .Header.BitRateSwitch = FDCAN_BRS_OFF,
+        .Header.FDFormat =  FDCAN_CLASSIC_CAN,
+        .Header.TxEventFifoControl =  FDCAN_NO_TX_EVENTS,
+        .Header.MessageMarker = 0,
+};
+
 
 /* 接收结构体 */
-CAN_RxFrame_TypeDef CAN1_RxFrame;
-CAN_RxFrame_TypeDef CAN2_RxFrame;
+FDCAN_RxFrame_TypeDef FDCAN1_RxFrame;
+FDCAN_RxFrame_TypeDef FDCAN2_RxFrame;
+FDCAN_RxFrame_TypeDef FDCAN3_RxFrame;
 
-void can_filter_init(void) {
-    CAN_FilterTypeDef can_filter_st;
+void bsp_can_init(void) {
 
-    can_filter_st.FilterActivation = ENABLE;
-    can_filter_st.FilterMode = CAN_FILTERMODE_IDMASK;
-    can_filter_st.FilterScale = CAN_FILTERSCALE_32BIT;
-    can_filter_st.FilterIdHigh = 0x0000;
-    can_filter_st.FilterIdLow = 0x0000;
-    can_filter_st.FilterMaskIdHigh = 0x0000;
-    can_filter_st.FilterMaskIdLow = 0x0000;
-    can_filter_st.FilterBank = 0;
-    can_filter_st.FilterFIFOAssignment = CAN_RX_FIFO0;
-    HAL_CAN_ConfigFilter(&hcan1, &can_filter_st);
-    HAL_CAN_Start(&hcan1);
-    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
+    /***************************************** FDCAN1 *****************************************************/
+    FDCAN_FilterTypeDef FDCAN1_FilterConfig;
 
-    can_filter_st.SlaveStartFilterBank = 14;
-    can_filter_st.FilterBank = 14;
-    HAL_CAN_ConfigFilter(&hcan2, &can_filter_st);
-    HAL_CAN_Start(&hcan2);
-    HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO0_MSG_PENDING);
+    FDCAN1_FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FDCAN1_FilterConfig.FilterIndex = 0;
+    FDCAN1_FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FDCAN1_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FDCAN1_FilterConfig.FilterID1 = 0x00000000;
+    FDCAN1_FilterConfig.FilterID2 = 0x00000000;
+
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &FDCAN1_FilterConfig) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) !=
+        HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK) {
+        Error_Handler();
+    }
+
+/***************************************** FDCAN2 *****************************************************/
+    FDCAN_FilterTypeDef FDCAN2_FilterConfig;
+
+    FDCAN2_FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FDCAN2_FilterConfig.FilterIndex = 0;
+    FDCAN2_FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FDCAN2_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FDCAN2_FilterConfig.FilterID1 = 0x00000000;
+    FDCAN2_FilterConfig.FilterID2 = 0x00000000;
+
+    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &FDCAN2_FilterConfig) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) !=
+        HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK) {
+        Error_Handler();
+    }
+
+
+    /***************************************** FDCAN3 *****************************************************/
+    FDCAN_FilterTypeDef FDCAN3_FilterConfig;
+
+    FDCAN3_FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FDCAN3_FilterConfig.FilterIndex = 0;
+    FDCAN3_FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FDCAN3_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FDCAN3_FilterConfig.FilterID1 = 0x00000000;
+    FDCAN3_FilterConfig.FilterID2 = 0x00000000;
+
+    if (HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN3_FilterConfig) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan3, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) !=
+        HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+        Error_Handler();
+    }
+
+    if (HAL_FDCAN_Start(&hfdcan3) != HAL_OK) {
+        Error_Handler();
+    }
 }
 
-//**对于STM32的HAL库和CAN外设，邮箱不为空的条件通常是通过检查传输状态寄存器（TSR）中的特定位来确定的。
-// 具体来说，每个邮箱都有一个对应的“传输邮箱空”（Transmit Mailbox Empty，TME）位，当该位为0时，表示邮箱不为空；当该位为1时，表示邮箱为空且可用。
+/** FDCAN1接收中断处理 **/
+static void FDCAN1_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
-/** 寻找不为空的邮箱 **/
-static uint32_t get_can_free_mail(CAN_HandleTypeDef* hcan)
-{
-    if ((hcan->Instance->TSR & CAN_TSR_TME0) != RESET){
-        return CAN_TX_MAILBOX0;
-    }
-    else if ((hcan->Instance->TSR & CAN_TSR_TME1) != RESET){
-        return CAN_TX_MAILBOX1;
-    }
-    else if ((hcan->Instance->TSR & CAN_TSR_TME2) != RESET){
-        return CAN_TX_MAILBOX2;
-    }
-    else{
-        return 0;
-    }
-}
+    switch (FDCAN1_RxFrame.Header.Identifier) {
 
-void CAN_SendJointData(CAN_TxFrame_TypeDef* JointTxFrame)
-{
-    /** 获取邮箱 **/
-    uint32_t can_send_mail = get_can_free_mail(JointTxFrame->hcan);
-
-    /** 发送数据 **/
-    if (can_send_mail != 0) {
-        HAL_CAN_AddTxMessage(JointTxFrame->hcan, &JointTxFrame->Header, JointTxFrame->Data, &can_send_mail);
-    }
-}
-
-void CAN_SendWheelData(CAN_TxFrame_TypeDef* WheelTxFrame)
-{
-    /** 获取邮箱 **/
-    uint32_t can_send_mail = get_can_free_mail(WheelTxFrame->hcan);
-
-    /** 发送数据 **/
-    if (can_send_mail != 0) {
-        HAL_CAN_AddTxMessage(WheelTxFrame->hcan, &WheelTxFrame->Header, WheelTxFrame->Data, &can_send_mail);
-    }
-}
-
-/** CAN1接收中断处理 **/
-static void CAN1_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[])
-{
-    switch (CAN1_RxFrame.Header.StdId) {
-        case JOINT_LF_RECEIVE:
-        {
+        case JOINT_LF_RECEIVE: {
             dm8009p_info_update(&joint[LF], Data);
             break;
         }
 
-        case JOINT_LB_RECEIVE:
-        {
+        case JOINT_LB_RECEIVE: {
             dm8009p_info_update(&joint[LB], Data);
             break;
         }
 
-        case JOINT_RF_RECEIVE:
-        {
+        default: {
+            break;
+        }
+    }
+
+}
+
+/** FDCAN2接收中断处理 **/
+static void FDCAN2_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
+
+    switch (FDCAN2_RxFrame.Header.Identifier) {
+        case JOINT_RF_RECEIVE: {
             dm8009p_info_update(&joint[RF], Data);
             break;
         }
 
-        case JOINT_RB_RECEIVE:
-        {
+        case JOINT_RB_RECEIVE: {
             dm8009p_info_update(&joint[RB], Data);
             break;
         }
 
-        default:
-        {
+        default: {
             break;
         }
     }
 
 }
 
-/** CAN2接收中断处理 **/
-static void CAN2_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[])
-{
-    switch(CAN2_RxFrame.Header.StdId){
+/** FDCAN3接收中断处理 **/
+static void FDCAN3_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
-        case WHEEL_L_RECEIVE :
-        {
+    switch (FDCAN3_RxFrame.Header.Identifier) {
+
+        case WHEEL_L_RECEIVE: {
             DJI_Info_Update(&wheel[L], Data);
             break;
         }
 
-        case WHEEL_R_RECEIVE :
-        {
+        case WHEEL_R_RECEIVE: {
             DJI_Info_Update(&wheel[R], Data);
             break;
         }
 
-        default:
-        {
+        default: {
             break;
         }
 
     }
-
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
 
-    if (hcan == &hcan1)
-    {
-        if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &CAN1_RxFrame.Header, CAN1_RxFrame.Data) == HAL_OK)
-        {
-            CAN1_RxFifo0RxHandler(&CAN1_RxFrame.Header.StdId, CAN1_RxFrame.Data);
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs) {
+
+    if (hfdcan == &hfdcan1) {
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN1_RxFrame.Header, FDCAN1_RxFrame.Data) == HAL_OK) {
+            FDCAN1_RxFifo0RxHandler(&FDCAN1_RxFrame.Header.Identifier, FDCAN1_RxFrame.Data);
         }
-    }
-    else if (hcan == &hcan2)
-    {
-        if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &CAN2_RxFrame.Header, CAN2_RxFrame.Data) == HAL_OK)
-        {
-            CAN2_RxFifo0RxHandler(&CAN2_RxFrame.Header.StdId, CAN2_RxFrame.Data);
+    } else if (hfdcan == &hfdcan2) {
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN2_RxFrame.Header, FDCAN2_RxFrame.Data) == HAL_OK) {
+            FDCAN2_RxFifo0RxHandler(&FDCAN2_RxFrame.Header.Identifier, FDCAN2_RxFrame.Data);
+        }
+    } else if (hfdcan == &hfdcan3) {
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN3_RxFrame.Header, FDCAN3_RxFrame.Data) == HAL_OK) {
+            FDCAN3_RxFifo0RxHandler(&FDCAN3_RxFrame.Header.Identifier, FDCAN3_RxFrame.Data);
         }
     }
 }

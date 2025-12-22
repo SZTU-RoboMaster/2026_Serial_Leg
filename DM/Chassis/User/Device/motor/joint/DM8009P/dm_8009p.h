@@ -18,7 +18,7 @@
 #define DM8009P_T_MAX 50.0f
 
 
-typedef struct{
+typedef struct {
     uint32_t id;
     /** 绝对位置 **/
     float pos_r;
@@ -34,26 +34,37 @@ typedef struct{
 void dm8009p_init(Dm8009P *motor, uint32_t device_id);
 
 /** 使能电机 **/
-void set_dm8009p_enable(Dm8009P* motor);
+void set_left_dm8009p_enable(Dm8009P *left_motor);
 
-/** 失能电机 **/
-void set_dm8009p_disable(Dm8009P* motor);
+void set_right_dm8009p_enable(Dm8009P *right_motor);
+
 
 /** 位置速度模式模式 **/
-void set_dm8009p_pos_speed(Dm8009P* motor,
-                           float pos_rad,
-                           float speed_rad_per_s);
+void set_left_dm8009p_pos_speed(Dm8009P *left_motor,
+                                float pos_rad,
+                                float speed_rad_per_s);
+
+void set_right_dm8009p_pos_speed(Dm8009P *right_motor,
+                                 float pos_rad,
+                                 float speed_rad_per_s);
 
 /** 单电机MIT模式 **/
-void set_dm8009p_MIT(Dm8009P* motor,
-                    float pos,
-                    float speed,
-                    float kp,
-                    float kd,
-                    float torque);
+void set_left_dm8009p_MIT(Dm8009P *left_motor,
+                          float pos,
+                          float speed,
+                          float kp,
+                          float kd,
+                          float torque);
+
+void set_right_dm8009p_MIT(Dm8009P *right_motor,
+                           float pos,
+                           float speed,
+                           float kp,
+                           float kd,
+                           float torque);
 
 /** 关节电机反馈解析 **/
-void dm8009p_info_update(Dm8009P* motor, uint8_t data[]);
+void dm8009p_info_update(Dm8009P *motor, uint8_t data[]);
 
 
 #endif

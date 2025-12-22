@@ -168,6 +168,17 @@ SECTIONS
     _edata = .;        /* define a global symbol at data end */
   } >DTCMRAM AT> FLASH
 
+/** 手动添加：指定使用DMA数据的变量放到0x24000000里 **/
+  .AXI_SRAM :
+  {
+    . = ALIGN(4);
+    _sAXI_SRAM = 0x24000000;    /* 修复：移除前面的点号 */
+    *(.AXI_SRAM)
+    *(.AXI_SRAM*)
+    . = ALIGN(4);
+    _eAXI_SRAM = .;
+  } >RAM AT> FLASH
+
 
   /* Uninitialized data section */
   . = ALIGN(4);
