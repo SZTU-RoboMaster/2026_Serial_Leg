@@ -108,6 +108,7 @@ int main(void) {
 
     USART_RxDMA_MultiBuffer_Init(&huart5, (uint32_t *) SBUS_MultiRx_Buf[0], (uint32_t *) SBUS_MultiRx_Buf[1],
                                  SBUS_RX_BUF_NUM);
+
     /* USER CODE END 2 */
 
     /* Call init function for freertos objects (in cmsis_os2.c) */
@@ -124,7 +125,7 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        USART_Vofa_Justfloat_Transmit(2, 0, 0);
+
     }
     /* USER CODE END 3 */
 }
