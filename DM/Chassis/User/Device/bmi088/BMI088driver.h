@@ -45,27 +45,22 @@
 #define BMI088_GYRO_250_SEN 0.00013315805450396191230191732547673f
 #define BMI088_GYRO_125_SEN 0.000066579027251980956150958662738366f
 
+typedef struct {
+    float Accel[3];
 
-typedef __packed struct BMI088_RAW_DATA
-{
-    uint8_t status;
-    int16_t accel[3];
-    int16_t temp;
-    int16_t gyro[3];
-} bmi088_raw_data_t;
+    float Gyro[3];
 
-typedef struct BMI088_REAL_DATA
-{
-    uint8_t status;
-    float accel[3];
-    float temp;
-    float gyro[3];
-    float time;
-} bmi088_real_data_t;
+    float TempWhenCali;
+    float Temperature;
+
+    float AccelScale;
+    float GyroOffset[3];
+
+    float gNorm;
+} IMU_Data_t;
 
 
-enum
-{
+enum {
     BMI088_NO_ERROR = 0x00,
     BMI088_ACC_PWR_CTRL_ERROR = 0x01,
     BMI088_ACC_PWR_CONF_ERROR = 0x02,
@@ -87,15 +82,14 @@ enum
 };
 
 
-
-
-
 extern uint8_t BMI088_init(void);
+
 extern uint8_t bmi088_accel_init(void);
+
 extern uint8_t bmi088_gyro_init(void);
 
-extern void BMI088_read(float gyro[3], float accel[3], float *temperate);
+void BMI088_read(IMU_Data_t *bmi088);
 
-
+extern IMU_Data_t BMI088;
 
 #endif

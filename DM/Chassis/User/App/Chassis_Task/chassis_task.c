@@ -596,12 +596,10 @@ MIT_send_torque_task(float joint_LF_torque, float joint_LB_torque, float joint_R
                      float L_speed, float L_Kd,
                      float R_speed, float R_Kd) {
     /** joint **/
-    int32_t count = 0;
-
-    set_dm8009p_MIT(&joint[LF], 0.0f, L_speed, 0, L_Kd, joint_LF_torque);
-    set_dm8009p_MIT(&joint[LB], 0.0f, L_speed, 0, L_Kd, joint_LB_torque);
-    set_dm8009p_MIT(&joint[RF], 0.0f, R_speed, 0, R_Kd, joint_RF_torque);
-    set_dm8009p_MIT(&joint[RB], 0.0f, R_speed, 0, R_Kd, joint_RB_torque);
+    set_left_dm8009p_MIT(&joint[LF], 0.0f, L_speed, 0, L_Kd, joint_LF_torque);
+    set_left_dm8009p_MIT(&joint[LB], 0.0f, L_speed, 0, L_Kd, joint_LB_torque);
+    set_right_dm8009p_MIT(&joint[RF], 0.0f, R_speed, 0, R_Kd, joint_RF_torque);
+    set_right_dm8009p_MIT(&joint[RB], 0.0f, R_speed, 0, R_Kd, joint_RB_torque);
 
     /** wheel **/
     int16_t L_wheel_data = wheel_L_torque * (1 / TORQUE_CONSTANT_3508) * DATA_PER_A;
@@ -619,10 +617,10 @@ static void POS_SPEED_send_torque_task(float LF_pos, float LB_pos, float RF_pos,
                                        float LF_speed, float LB_speed, float RF_speed, float RB_speed,
                                        float wheel_L_torque, float wheel_R_torque) {
 
-    set_dm8009p_pos_speed(&joint[LF], LF_pos, LF_speed);
-    set_dm8009p_pos_speed(&joint[LB], LB_pos, LB_speed);
-    set_dm8009p_pos_speed(&joint[RF], RF_pos, RF_speed);
-    set_dm8009p_pos_speed(&joint[RB], RB_pos, RB_speed);
+    set_left_dm8009p_pos_speed(&joint[LF], LF_pos, LF_speed);
+    set_left_dm8009p_pos_speed(&joint[LB], LB_pos, LB_speed);
+    set_right_dm8009p_pos_speed(&joint[RF], RF_pos, RF_speed);
+    set_right_dm8009p_pos_speed(&joint[RB], RB_pos, RB_speed);
 
     /** wheel **/
     int16_t L_wheel_data = wheel_L_torque * (1 / TORQUE_CONSTANT_3508) * DATA_PER_A;
@@ -634,10 +632,8 @@ static void POS_SPEED_send_torque_task(float LF_pos, float LB_pos, float RF_pos,
                     0);
 }
 
-int32_t count = 0;
 
 void chassis_task(void) {
-    count++;
 
     /** 获取遥控器信息(模式 + 数据) **/
 //    remote_cmd();

@@ -57,11 +57,18 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, ENABLE_5V_Pin|ACC_CS_Pin|GYRO_CS_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : ENABLE_5V_Pin ACC_CS_Pin GYRO_CS_Pin */
-  GPIO_InitStruct.Pin = ENABLE_5V_Pin|ACC_CS_Pin|GYRO_CS_Pin;
+  /*Configure GPIO pin : ENABLE_5V_Pin */
+  GPIO_InitStruct.Pin = ENABLE_5V_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(ENABLE_5V_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ACC_CS_Pin GYRO_CS_Pin */
+  GPIO_InitStruct.Pin = ACC_CS_Pin|GYRO_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA9 PA10 */

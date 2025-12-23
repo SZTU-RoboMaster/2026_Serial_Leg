@@ -30,8 +30,9 @@
 /* USER CODE BEGIN Includes */
 #include "bsp_can.h"
 #include "bsp_usart.h"
+#include "BMI088driver.h"
 #include "vofa.h"
-#include "string.h"
+#include "bsp_dwt.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,7 +53,9 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-char str[] = "Hello";
+float gyro[3];
+float accel[3];
+float temperate;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -104,18 +107,21 @@ int main(void) {
     MX_FDCAN3_Init();
     MX_UART7_Init();
     /* USER CODE BEGIN 2 */
+    DWT_Init(480);
+
     bsp_can_init();
 
     USART_RxDMA_MultiBuffer_Init(&huart5, (uint32_t *) SBUS_MultiRx_Buf[0], (uint32_t *) SBUS_MultiRx_Buf[1],
                                  SBUS_RX_BUF_NUM);
 
+    while (BMI088_init() != BMI088_NO_ERROR);
     /* USER CODE END 2 */
 
     /* Call init function for freertos objects (in cmsis_os2.c) */
-//  MX_FREERTOS_Init();
-//
-//  /* Start scheduler */
-//  osKernelStart();
+    MX_FREERTOS_Init();
+
+    /* Start scheduler */
+    osKernelStart();
 
     /* We should never get here as control is now taken by the scheduler */
 
@@ -125,7 +131,6 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-
     }
     /* USER CODE END 3 */
 }
