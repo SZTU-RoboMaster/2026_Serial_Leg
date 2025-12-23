@@ -667,27 +667,4 @@ void chassis_task(void) {
         }
     }
 
-//    MIT_send_torque_task(chassis.leg_L.joint_F_torque,
-//                     chassis.leg_L.joint_B_torque,
-//                     -chassis.leg_R.joint_F_torque,
-//                     -chassis.leg_R.joint_B_torque,
-//                     chassis.leg_L.wheel_torque,
-//                     chassis.leg_R.wheel_torque,
-//                     L_Speed,
-//                     L_Kd,
-//                     R_Speed,
-//                     R_Kd);
-
-    MIT_send_torque_task(0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f,
-                         0.0f);
-
-    USART_Vofa_Justfloat_Transmit(chassis.chassis_ctrl_mode, 0, 0);
 }

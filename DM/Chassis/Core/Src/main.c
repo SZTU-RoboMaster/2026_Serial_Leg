@@ -25,13 +25,13 @@
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
-#include "bsp_can.h"
-#include "remote.h"
-#include "bsp_usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "bsp_can.h"
+#include "bsp_usart.h"
+#include "vofa.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,7 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+char str[] = "Hello";
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,6 +102,7 @@ int main(void) {
     MX_FDCAN1_Init();
     MX_FDCAN2_Init();
     MX_FDCAN3_Init();
+    MX_UART7_Init();
     /* USER CODE BEGIN 2 */
     bsp_can_init();
 
@@ -110,10 +111,10 @@ int main(void) {
     /* USER CODE END 2 */
 
     /* Call init function for freertos objects (in cmsis_os2.c) */
-    MX_FREERTOS_Init();
-
-    /* Start scheduler */
-    osKernelStart();
+//  MX_FREERTOS_Init();
+//
+//  /* Start scheduler */
+//  osKernelStart();
 
     /* We should never get here as control is now taken by the scheduler */
 
@@ -123,6 +124,7 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
+        USART_Vofa_Justfloat_Transmit(2, 0, 0);
     }
     /* USER CODE END 3 */
 }
