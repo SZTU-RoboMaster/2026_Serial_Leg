@@ -22,17 +22,17 @@
 #include "dma.h"
 #include "fdcan.h"
 #include "memorymap.h"
-#include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <string.h>
 #include "bsp_can.h"
 #include "bsp_usart.h"
-#include "BMI088driver.h"
 #include "vofa.h"
 #include "bsp_dwt.h"
+#include "dm_imu.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,9 +53,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-float gyro[3];
-float accel[3];
-float temperate;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,11 +99,11 @@ int main(void) {
     MX_GPIO_Init();
     MX_DMA_Init();
     MX_UART5_Init();
-    MX_SPI2_Init();
     MX_FDCAN1_Init();
     MX_FDCAN2_Init();
     MX_FDCAN3_Init();
     MX_UART7_Init();
+    MX_USART3_UART_Init();
     /* USER CODE BEGIN 2 */
     DWT_Init(480);
 
@@ -114,14 +112,15 @@ int main(void) {
     USART_RxDMA_MultiBuffer_Init(&huart5, (uint32_t *) SBUS_MultiRx_Buf[0], (uint32_t *) SBUS_MultiRx_Buf[1],
                                  SBUS_RX_BUF_NUM);
 
-    while (BMI088_init() != BMI088_NO_ERROR);
+    HAL_UART_Receive_DMA(&huart3, uRx, RX_LEN);
+
     /* USER CODE END 2 */
 
     /* Call init function for freertos objects (in cmsis_os2.c) */
-    MX_FREERTOS_Init();
-
-    /* Start scheduler */
-    osKernelStart();
+//    MX_FREERTOS_Init();
+//
+//    /* Start scheduler */
+//    osKernelStart();
 
     /* We should never get here as control is now taken by the scheduler */
 

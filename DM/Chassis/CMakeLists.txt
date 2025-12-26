@@ -78,14 +78,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/App/Board_Communication_Task/board_communication_task.c
         User/App/Chassis_Task/chassis_task.c
         User/App/Detect_Task/detect_task.c
-        User/App/INS_Task/ins_task.c
 
         User/Bsp/can/bsp_can.c
         User/Bsp/dwt/bsp_dwt.c
         User/Bsp/usart/bsp_usart.c
 
-        User/Device/bmi088/BMI088driver.c
-        User/Device/bmi088/BMI088Middleware.c
         User/Device/motor/joint/DM8009P/dm_8009p.c
         User/Device/motor/joint/joint.c
         User/Device/motor/wheel/DJI/DJI_motor.c
@@ -93,6 +90,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/Device/remote/error.c
         User/Device/remote/remote.c
         User/Device/vofa/vofa.c
+        User/Device/DM_IMU/dm_imu.c
 
         User/Robot_def/robot_def.c
 )
@@ -113,14 +111,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/App/Board_Communication_Task
         User/App/Chassis_Task
         User/App/Detect_Task
-        User/App/INS_Task
 
         User/Bsp/can
         User/Bsp/dwt
         User/Bsp/usart
 
-        User/Device/bmi088
         User/Device/can_device
+        User/Device/DM_IMU
         User/Device/motor/joint
         User/Device/motor/joint/DM8009P
         User/Device/motor/wheel
