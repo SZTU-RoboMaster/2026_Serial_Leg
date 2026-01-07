@@ -1,5 +1,6 @@
 #include "remote.h"
 #include "usart.h"
+#include "robot_def.h"
 
 RC_ctrl_t remote_ctrl;
 

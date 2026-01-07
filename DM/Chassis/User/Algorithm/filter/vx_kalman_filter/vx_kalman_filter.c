@@ -18,7 +18,7 @@ float vaEstimateKF_Q[4] = {VEL_PROCESS_NOISE, 0.0f,
                            0.0f, ACC_PROCESS_NOISE};    // Q矩阵初始值、先验估计值方差噪声
 
 float vaEstimateKF_R[4] = {VEL_MEASURE_NOISE, 0.0f,
-                           0.0f, ACC_MEASURE_NOISE};    //200、200为测量噪声方差
+                           0.0f, ACC_MEASURE_NOISE};    // 测量噪声方差
 
 const float vaEstimateKF_H[4] = {1.0f, 0.0f,
                                  0.0f, 1.0f};    // 设置矩阵H为常量

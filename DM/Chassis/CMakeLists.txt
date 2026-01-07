@@ -67,7 +67,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/controller/controller.c
         User/Algorithm/filter/kalman_filter/kalman_filter.c
         User/Algorithm/filter/low_pass_filter/low_pass_filter.c
-        User/Algorithm/filter/moving_filter/moving_filter.c
         User/Algorithm/filter/vx_kalman_filter/vx_kalman_filter.c
         User/Algorithm/lqr/lqr.c
         User/Algorithm/pid/pid.c
@@ -100,7 +99,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/controller
         User/Algorithm/filter/kalman_filter
         User/Algorithm/filter/low_pass_filter
-        User/Algorithm/filter/moving_filter
         User/Algorithm/filter/vx_kalman_filter
         User/Algorithm/lqr
         User/Algorithm/pid

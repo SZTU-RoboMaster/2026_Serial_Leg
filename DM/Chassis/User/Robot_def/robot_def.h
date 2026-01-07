@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include "pid.h"
-#include "moving_filter.h"
 #include "can_device.h"
 #include "user_lib.h"
 #include "DJI_motor.h"
@@ -25,7 +24,7 @@
 //#define LEG_22_B_POS 0.60f + (20 * DEGREE_TO_RAD)
 
 // 底盘运行周期
-#define CHASSIS_PERIOD 2 // ms 计算频率: 500Hz 不宜过低
+#define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
 
 #define BALANCE_POINT (-0.078f)
 
@@ -71,7 +70,7 @@
 #define CHASSIS_TURN_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_TURN_POS_PID_OUT_LIMIT 2.0f
 
-#define CHASSIS_TURN_SPEED_PID_P 2.0f
+#define CHASSIS_TURN_SPEED_PID_P 1.0f
 #define CHASSIS_TURN_SPEED_PID_I 0.0f
 #define CHASSIS_TURN_SPEED_PID_D 0.0f
 #define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
@@ -79,9 +78,9 @@
 
 /** Joint **/
 // 防劈叉PID
-#define CHASSIS_LEG_COORDINATION_PID_P 10.0f
+#define CHASSIS_LEG_COORDINATION_PID_P 0.0f // 1
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
-#define CHASSIS_LEG_COORDINATION_PID_D 1.0f
+#define CHASSIS_LEG_COORDINATION_PID_D 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 10.0f
 
@@ -107,16 +106,15 @@
 #define CHASSIS_OFFGROUND_L0_PID_OUT_LIMIT 0.0f
 
 // Roll补偿PID
-#define CHASSIS_ROLL_PID_P 200.0f
+#define CHASSIS_ROLL_PID_P 200.0f // 200
 #define CHASSIS_ROLL_PID_I 0.0f
 #define CHASSIS_ROLL_PID_D 0.0f
 #define CHASSIS_ROLL_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_ROLL_PID_OUT_LIMIT 50.0f
 
 
-
 /** 底盘物理参数结构体 **/
-typedef struct{
+typedef struct {
     float wheel_radius; // 驱动轮半径
     float body_weight; // 机体质量(有云台要算上云台)
     float wheel_weight; // 驱动轮重量(算上电机)
@@ -126,7 +124,7 @@ typedef struct{
 } ChassisPhysicalConfig;
 
 /** 底盘模式结构体 **/
-typedef enum{
+typedef enum {
     CHASSIS_DISABLE = 1, // 失能模式
     CHASSIS_INIT, // 初始化模式
     CHASSIS_ENABLE, // 使能模式
@@ -135,23 +133,23 @@ typedef enum{
 } ChassisCtrlMode;
 
 /** 底盘状态结构体 -- 用于倒地自救 **/
-typedef enum{
+typedef enum {
     CHASSIS_BODY_UNNORMAL,
     CHASSIS_BODY_NORMAL,
 } ChassisBodyState;
 
-typedef enum{
+typedef enum {
     CHASSIS_FALL_LEG_UNNORMAL,
     CHASSIS_FALL_LEG_NORMAL,
 } ChassisFallLegState;
 
-typedef enum{
+typedef enum {
     CHASSIS_COULD_NOT_RECOVER,
     CHASSIS_COULD_RECOVER,
 } ChassisRecoverState;
 
 
-typedef struct{
+typedef struct {
     float v_m_per_s; // 期望速度
     float yaw_rad;
     float roll_rad;
@@ -163,7 +161,7 @@ typedef struct{
 
 
 /** 跳跃状态结构体 **/
-typedef enum{
+typedef enum {
     NOT_READY,
     READY, // 第一阶段：收腿蓄力
     STRETCHING, // 第二阶段：伸腿蹬地
@@ -172,11 +170,14 @@ typedef enum{
 } JumpState;
 
 /** 传感器结构体 **/
-typedef struct{
+typedef struct {
     // 欧拉角
     float roll_rad;
     float pitch_rad;
+
     float yaw_rad;
+    float yaw_last_rad;
+    int16_t yaw_round_count;
     float yaw_total_rad;
 
 
@@ -191,13 +192,13 @@ typedef struct{
     float az;
 
     // 机体竖直向上的加速度
-    float robot_az;
+//    float robot_az;
 
 } IMUReference;
 
 
 /** 状态变量结构体 **/
-typedef struct{
+typedef struct {
     float theta; // 状态变量1
     float theta_dot; // 状态变量2
     float theta_last;
@@ -216,29 +217,30 @@ typedef struct{
 /** VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC VMC **/
 
 /** 正运动学解算  FK == Forward Kinematics(正运动学) **/
-typedef struct{// 腿长
+typedef struct {// 腿长
     float L0;
-    float L0_last;
     float L0_dot;
     float L0_dot_last;
     float L0_ddot;
 } FKL0;
 
-typedef struct{// 五连杆中的角度
+typedef struct {// 五连杆中的角度
     float phi1;
     float phi2;
     float phi3;
     float phi4;
 
+    float phi1_dot;
+    float phi4_dot;
+
     float phi0; // 腿摆角
-    float last_phi0;
     float d_phi0;// 摆角变化速度
     float last_d_phi0;
     float dd_phi0;
 
 } FKPhi;
 
-typedef struct{// 五连杆中的点坐标(Coordinates)
+typedef struct {// 五连杆中的点坐标(Coordinates)
     float a_x, a_y;
     float b_x, b_y;
     float c_x, c_y;
@@ -246,11 +248,10 @@ typedef struct{// 五连杆中的点坐标(Coordinates)
     float e_x, e_y;
 } FKPointCoordinates;
 
-typedef struct{
+typedef struct {
     FKL0 fk_L0;
     FKPhi fk_phi;
     FKPointCoordinates fk_point_coordinates;
-    float d_alpha; // ?
 
 /** 正动力学解算(Forward Dynamics)：从 末端力(F Tp) 到 末端执行器(T1 T4) **/
     union { // 自行学习联合体的特性: union
@@ -340,10 +341,10 @@ typedef struct {
         } E;
     } V_fdb;
 
-}InverseKinematics;
+} InverseKinematics;
 
 /** 腿部VMC结构体 **/
-typedef struct{
+typedef struct {
     ForwardKinematics forward_kinematics;
     InverseKinematics inverse_kinematics;
 } VMC;
@@ -352,7 +353,7 @@ typedef struct{
 
 
 /** 腿部结构体 **/
-typedef struct{
+typedef struct {
 
     ChassisCtrlInfo chassis_ctrl_info;
 
@@ -388,7 +389,7 @@ typedef struct{
 } Leg;
 
 /** 底盘结构体 **/
-typedef struct{
+typedef struct {
 
     /** 传感器 **/
     IMUReference imu_reference;

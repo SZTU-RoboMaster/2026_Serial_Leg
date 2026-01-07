@@ -1,9 +1,14 @@
 #include "dm_imu.h"
+#include "usart.h"
 #include <string.h>
 
-dm_imu_t imu;
+dm_imu_t DM_IMU;
 
 __attribute__((section (".AXI_SRAM")))uint8_t uRx[RX_LEN];
+
+void DM_IMU_Init(void) {
+    HAL_UART_Receive_DMA(&huart3, uRx, RX_LEN);
+}
 
 void imu_data_unpack(uint8_t *pData) {
     normal_packet_t normal_packet;
@@ -18,9 +23,12 @@ void imu_data_unpack(uint8_t *pData) {
     }
 
     if (normal_packet.reg == 0x01) {
-        imu.accel[0] = normal_packet.data[0];
-        imu.accel[1] = normal_packet.data[1];
-        imu.accel[2] = normal_packet.data[2];
+
+        DM_IMU.accel[X] = normal_packet.data[X];
+        DM_IMU.accel[Y] = normal_packet.data[Y];
+        DM_IMU.accel[Z] = normal_packet.data[Z];
+
+
     }
 
     /********* 读取角速度 *********/
@@ -32,9 +40,10 @@ void imu_data_unpack(uint8_t *pData) {
 
     /** 角速度 **/
     if (normal_packet.reg == 0x02) {
-        imu.gyro[0] = normal_packet.data[0];
-        imu.gyro[1] = normal_packet.data[1];
-        imu.gyro[2] = normal_packet.data[2];
+
+        DM_IMU.gyro[X] = normal_packet.data[X];
+        DM_IMU.gyro[Y] = normal_packet.data[Y];
+        DM_IMU.gyro[Z] = normal_packet.data[Z];
     }
 
     /********* 读取姿态角 *********/
@@ -45,9 +54,10 @@ void imu_data_unpack(uint8_t *pData) {
     }
 
     if (normal_packet.reg == 0x03) {
-        imu.roll = normal_packet.data[0];
-        imu.pitch = normal_packet.data[1];
-        imu.yaw = normal_packet.data[2];
+
+        DM_IMU.roll = normal_packet.data[X];
+        DM_IMU.pitch = normal_packet.data[Y];
+        DM_IMU.yaw = normal_packet.data[Z];
     }
 
     /********* 读取四元数 *********/
@@ -59,10 +69,11 @@ void imu_data_unpack(uint8_t *pData) {
 
     /** 四元数 **/
     if (ext_packet.reg == 0x04) {
-        imu.quaternion[0] = ext_packet.data[0];
-        imu.quaternion[1] = ext_packet.data[1];
-        imu.quaternion[2] = ext_packet.data[2];
-        imu.quaternion[3] = ext_packet.data[3];
+
+        DM_IMU.quaternion[0] = ext_packet.data[0];
+        DM_IMU.quaternion[1] = ext_packet.data[1];
+        DM_IMU.quaternion[2] = ext_packet.data[2];
+        DM_IMU.quaternion[3] = ext_packet.data[3];
     }
 
 }

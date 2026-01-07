@@ -107,20 +107,23 @@ int main(void) {
     /* USER CODE BEGIN 2 */
     DWT_Init(480);
 
+    // CAN过滤器初始化
     bsp_can_init();
 
+    // SBUS双缓冲区初始化
     USART_RxDMA_MultiBuffer_Init(&huart5, (uint32_t *) SBUS_MultiRx_Buf[0], (uint32_t *) SBUS_MultiRx_Buf[1],
                                  SBUS_RX_BUF_NUM);
 
-    HAL_UART_Receive_DMA(&huart3, uRx, RX_LEN);
+    // 达妙IMU初始化
+    DM_IMU_Init();
 
     /* USER CODE END 2 */
 
     /* Call init function for freertos objects (in cmsis_os2.c) */
-//    MX_FREERTOS_Init();
-//
-//    /* Start scheduler */
-//    osKernelStart();
+    MX_FREERTOS_Init();
+
+    /* Start scheduler */
+    osKernelStart();
 
     /* We should never get here as control is now taken by the scheduler */
 

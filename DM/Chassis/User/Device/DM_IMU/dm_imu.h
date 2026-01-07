@@ -5,6 +5,11 @@
 
 #define RX_LEN   80
 
+
+#define X 0
+#define Y 1
+#define Z 2
+
 typedef struct {
     float accel[3];
     float gyro[3];
@@ -56,11 +61,11 @@ typedef struct {
 } normal_ext_packet_t;
 #pragma ()
 
+void DM_IMU_Init(void);
 
 void imu_data_unpack(uint8_t *pData);
 
-extern dm_imu_t imu;
-
+extern dm_imu_t DM_IMU;
 extern uint8_t uRx[RX_LEN];
 
 #endif
