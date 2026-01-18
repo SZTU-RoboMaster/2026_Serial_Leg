@@ -98,13 +98,6 @@
 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 50.0f
 
-// 离地后的腿长PID 暂时没用到
-#define CHASSIS_OFFGROUND_LO_PID_P 0.0f
-#define CHASSIS_OFFGROUND_L0_PID_I 0.0f
-#define CHASSIS_OFFGROUND_L0_PID_D 0.0f
-#define CHASSIS_OFFGROUND_L0_PID_IOUT_LIMIT 0.0f
-#define CHASSIS_OFFGROUND_L0_PID_OUT_LIMIT 0.0f
-
 // Roll补偿PID
 #define CHASSIS_ROLL_PID_P 200.0f // 200
 #define CHASSIS_ROLL_PID_I 0.0f
@@ -191,8 +184,11 @@ typedef struct {
     float ay;
     float az;
 
-    // 机体竖直向上的加速度
-//    float robot_az;
+    // 机体在世界坐标系竖直向上的加速度
+    float robot_az;
+
+    // 机体在世界坐标系移动的加速度
+    float robot_ax;
 
 } IMUReference;
 
@@ -371,9 +367,6 @@ typedef struct {
     Pid leg_pos_pid; // 腿长位置环
     Pid leg_speed_pid; // 腿长速度环
 
-    /** 离地后的腿长PID **/
-    Pid offground_leg_pid; // 离地后的腿长pid  使腿尽量接近地面，增加缓冲
-
     float wheel_torque; // 轮毂力矩
     float joint_F_torque; // 关节力矩
     float joint_B_torque;
@@ -383,8 +376,6 @@ typedef struct {
 
     /** 滤波器 **/
 
-    // theta_dot的微分
-    LowPassFilter theta_dot_lpf;
 
 } Leg;
 

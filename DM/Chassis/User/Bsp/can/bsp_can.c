@@ -171,6 +171,7 @@ static void FDCAN1_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 static void FDCAN2_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
     switch (FDCAN2_RxFrame.Header.Identifier) {
+
         case JOINT_RF_RECEIVE: {
             dm8009p_info_update(&joint[RF], Data);
             break;

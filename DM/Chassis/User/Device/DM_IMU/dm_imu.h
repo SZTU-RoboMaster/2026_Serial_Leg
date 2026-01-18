@@ -20,7 +20,6 @@ typedef struct {
 
 } dm_imu_t;
 
-
 /** 加速度、角速度、姿态角的帧格式（每一帧都是19个字节） **/
 #pragma (1)
 typedef struct {

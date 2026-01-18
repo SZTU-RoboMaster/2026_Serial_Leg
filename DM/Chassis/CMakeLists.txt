@@ -67,7 +67,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/controller/controller.c
         User/Algorithm/filter/kalman_filter/kalman_filter.c
         User/Algorithm/filter/low_pass_filter/low_pass_filter.c
-        User/Algorithm/filter/vx_kalman_filter/vx_kalman_filter.c
+        User/Algorithm/filter/kalman_filter/speed_kalman_filter/speed_kalman_filter.c
+        User/Algorithm/filter/kalman_filter/theta_kalman_filter/theta_kalman_filter.c
         User/Algorithm/lqr/lqr.c
         User/Algorithm/pid/pid.c
         User/Algorithm/QuaternionEKF/QuaternionEKF.c
@@ -77,6 +78,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/App/Board_Communication_Task/board_communication_task.c
         User/App/Chassis_Task/chassis_task.c
         User/App/Detect_Task/detect_task.c
+        User/App/INS_Task/ins_task.c
 
         User/Bsp/can/bsp_can.c
         User/Bsp/dwt/bsp_dwt.c
@@ -99,7 +101,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/controller
         User/Algorithm/filter/kalman_filter
         User/Algorithm/filter/low_pass_filter
-        User/Algorithm/filter/vx_kalman_filter
+        User/Algorithm/filter/kalman_filter/speed_kalman_filter
+        User/Algorithm/filter/kalman_filter/theta_kalman_filter
         User/Algorithm/lqr
         User/Algorithm/pid
         User/Algorithm/QuaternionEKF
@@ -109,6 +112,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/App/Board_Communication_Task
         User/App/Chassis_Task
         User/App/Detect_Task
+        User/App/INS_Task
 
         User/Bsp/can
         User/Bsp/dwt
