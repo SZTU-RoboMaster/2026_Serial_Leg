@@ -16,6 +16,11 @@
  *******************************************************************************/
 
 /** 宏定义 **/
+// phi偏置
+#define PHI1_OFFSET 2.20f
+#define PHI4_OFFSET 1.10f
+
+
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 2 // ms 计算频率 不宜过低
@@ -116,6 +121,12 @@ typedef enum {
     CHASSIS_SPIN, // 小陀螺
     CHASSIS_JUMP, // 跳跃模式
 } ChassisCtrlMode;
+
+/** 底盘运行状态 **/
+typedef enum {
+    CHASSIS_FALL = 1, // 倒地状态，需要倒地自救
+    CHASSIS_NORMAL, // 正常运行状态
+} ChassisState;
 
 
 typedef struct {

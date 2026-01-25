@@ -26,10 +26,11 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
 
-    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos + 0.04f;
-    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.02f;
-    leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos + 0.04f;
-    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos - 0.07f;
+    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos + PHI1_OFFSET;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos + PHI4_OFFSET;
+    leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos + PHI1_OFFSET;
+    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos + PHI4_OFFSET;
+
 
     // ½ÇËÙ¶È
     float LF_joint_speed = (get_joint_motors() + 0)->angular_vel;

@@ -86,7 +86,7 @@ static void chassis_pid_init(void) {
 
 /** 底盘初始化 **/
 void chassis_init(void) {
-    /** 初始化底盘模式 **/
+    /** 初始化底盘模式为失能 **/
     chassis.chassis_ctrl_mode = CHASSIS_DISABLE;
 
     /** 关节电机初始化 **/
@@ -147,16 +147,6 @@ void chassis_remote_cmd(void) {
     set_chassis_ctrl_info();
 }
 
-/** 底盘倒地自救 **/
-static void chassis_selfhelp(void) {
-    /** 检测是否需要自救 **/
-
-
-
-    /** 倒地自救尚未完成 **/
-
-}
-
 /** 获取底盘传感器数据 **/
 static void get_IMU_info(void) {
 
@@ -207,21 +197,28 @@ static void chassis_variable_update(void) {
     /********************* theta theta_dot ***********************/
 
     //1.theta
-    float L_theta_raw = PI / 2 - (chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad);
-    float R_theta_raw = PI / 2 - (chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad);
+    float L_theta_raw = (chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad) - PI / 2;
+    float R_theta_raw = (chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad) - PI / 2;
 
     //2. theta_dot
 
     chassis.leg_L.state_variable_feedback.theta_dot_last = chassis.leg_L.state_variable_feedback.theta_dot;
     chassis.leg_R.state_variable_feedback.theta_dot_last = chassis.leg_R.state_variable_feedback.theta_dot;
 
-    chassis.leg_L.state_variable_feedback.theta_dot = -(chassis.leg_L.vmc.forward_kinematics.fk_phi.d_phi0 +
-                                                        chassis.imu_reference.pitch_gyro);
-    chassis.leg_R.state_variable_feedback.theta_dot = -(chassis.leg_R.vmc.forward_kinematics.fk_phi.d_phi0 +
-                                                        chassis.imu_reference.pitch_gyro);
+    chassis.leg_L.state_variable_feedback.theta_dot = chassis.leg_L.vmc.forward_kinematics.fk_phi.d_phi0 +
+                                                      chassis.imu_reference.pitch_gyro;
+    chassis.leg_R.state_variable_feedback.theta_dot = chassis.leg_R.vmc.forward_kinematics.fk_phi.d_phi0 +
+                                                      chassis.imu_reference.pitch_gyro;
 
-    theta_calc(&chassis.leg_L, L_theta_raw, chassis.leg_L.state_variable_feedback.theta_dot);
-    theta_calc(&chassis.leg_R, R_theta_raw, chassis.leg_R.state_variable_feedback.theta_dot);
+    chassis.leg_L.state_variable_feedback.theta = theta_calc(&chassis.leg_L, L_theta_raw,
+                                                             chassis.leg_L.state_variable_feedback.theta_dot);
+    chassis.leg_R.state_variable_feedback.theta = theta_calc(&chassis.leg_R, R_theta_raw,
+                                                             chassis.leg_R.state_variable_feedback.theta_dot);
+
+
+    USART_Vofa_Justfloat_Transmit(R_theta_raw,
+                                  chassis.leg_R.state_variable_feedback.theta,
+                                  0);
 
     // 2.1 theta_ddot 需要加低通滤波
     chassis.leg_L.state_variable_feedback.theta_ddot =
@@ -230,6 +227,31 @@ static void chassis_variable_update(void) {
     chassis.leg_R.state_variable_feedback.theta_ddot =
             (chassis.leg_R.state_variable_feedback.theta_dot - chassis.leg_R.state_variable_feedback.theta_dot_last) /
             (CHASSIS_PERIOD * 0.001f);
+
+    /********************* x x_dot ***********************/
+    speed_calc();
+
+}
+
+/** 底盘观测器更新 **/
+static void chassis_observer_update(void) {
+    /** 获取传感器数据 **/
+    get_IMU_info();
+
+    /** 更新五连杆参数 **/
+    vmc_calc();
+
+    /** 更新底盘变量 **/
+    chassis_variable_update();
+}
+
+/** 底盘倒地自救 **/
+static void chassis_selfhelp(void) {
+    /** 检测是否需要自救 **/
+
+
+
+    /** 倒地自救尚未完成 **/
 
 }
 
@@ -373,15 +395,6 @@ static void chassis_init_task(void) {
 /** 底盘使能任务 **/
 static void chassis_enable_task(void) {
 
-//    /** 更新五连杆参数 **/
-//    vmc_calc();
-//
-//    /** 更新底盘变量 **/
-//    chassis_variable_update();
-
-    /** 速度融合 **/
-    speed_calc();
-
     /** 计算驱动轮力矩 **/
     wheel_calc();
 
@@ -421,14 +434,8 @@ void chassis_task(void) {
     /** 获取底盘遥控器信息(模式 + 数据) **/
     chassis_remote_cmd();
 
-    /** 获取传感器数据 **/
-    get_IMU_info();
-
-    /** 更新五连杆参数 **/
-    vmc_calc();
-
-    /** 更新底盘变量 **/
-    chassis_variable_update();
+    /** 底盘观测器更新 **/
+    chassis_observer_update();
 
     switch (chassis.chassis_ctrl_mode) {
         case CHASSIS_DISABLE: {
