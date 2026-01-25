@@ -60,19 +60,18 @@ FDCAN_RxFrame_TypeDef FDCAN1_RxFrame;
 FDCAN_RxFrame_TypeDef FDCAN2_RxFrame;
 FDCAN_RxFrame_TypeDef FDCAN3_RxFrame;
 
-void bsp_can_init(void) {
+static void FDCAN1_Config(void) {
 
-    /***************************************** FDCAN1 *****************************************************/
-    FDCAN_FilterTypeDef FDCAN1_FilterConfig;
+    FDCAN_FilterTypeDef FilterConfig;
 
-    FDCAN1_FilterConfig.IdType = FDCAN_STANDARD_ID;
-    FDCAN1_FilterConfig.FilterIndex = 0;
-    FDCAN1_FilterConfig.FilterType = FDCAN_FILTER_MASK;
-    FDCAN1_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN1_FilterConfig.FilterID1 = 0x00000000;
-    FDCAN1_FilterConfig.FilterID2 = 0x00000000;
+    FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FilterConfig.FilterIndex = 0;
+    FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FilterConfig.FilterID1 = 0x00000000;
+    FilterConfig.FilterID2 = 0x00000000;
 
-    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &FDCAN1_FilterConfig) != HAL_OK) {
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &FilterConfig) != HAL_OK) {
         Error_Handler();
     }
 
@@ -88,18 +87,20 @@ void bsp_can_init(void) {
     if (HAL_FDCAN_Start(&hfdcan1) != HAL_OK) {
         Error_Handler();
     }
+}
 
-/***************************************** FDCAN2 *****************************************************/
-    FDCAN_FilterTypeDef FDCAN2_FilterConfig;
+static void FDCAN2_Config(void) {
 
-    FDCAN2_FilterConfig.IdType = FDCAN_STANDARD_ID;
-    FDCAN2_FilterConfig.FilterIndex = 0;
-    FDCAN2_FilterConfig.FilterType = FDCAN_FILTER_MASK;
-    FDCAN2_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN2_FilterConfig.FilterID1 = 0x00000000;
-    FDCAN2_FilterConfig.FilterID2 = 0x00000000;
+    FDCAN_FilterTypeDef FilterConfig;
 
-    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &FDCAN2_FilterConfig) != HAL_OK) {
+    FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FilterConfig.FilterIndex = 1; // 过滤器索引不要重合
+    FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FilterConfig.FilterID1 = 0x00000000;
+    FilterConfig.FilterID2 = 0x00000000;
+
+    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &FilterConfig) != HAL_OK) {
         Error_Handler();
     }
 
@@ -115,19 +116,20 @@ void bsp_can_init(void) {
     if (HAL_FDCAN_Start(&hfdcan2) != HAL_OK) {
         Error_Handler();
     }
+}
 
+static void FDCAN3_Config(void) {
+    /***************************************** FDCAN1 *****************************************************/
+    FDCAN_FilterTypeDef FilterConfig;
 
-    /***************************************** FDCAN3 *****************************************************/
-    FDCAN_FilterTypeDef FDCAN3_FilterConfig;
+    FilterConfig.IdType = FDCAN_STANDARD_ID;
+    FilterConfig.FilterIndex = 2;
+    FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    FilterConfig.FilterID1 = 0x00000000;
+    FilterConfig.FilterID2 = 0x00000000;
 
-    FDCAN3_FilterConfig.IdType = FDCAN_STANDARD_ID;
-    FDCAN3_FilterConfig.FilterIndex = 0;
-    FDCAN3_FilterConfig.FilterType = FDCAN_FILTER_MASK;
-    FDCAN3_FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FDCAN3_FilterConfig.FilterID1 = 0x00000000;
-    FDCAN3_FilterConfig.FilterID2 = 0x00000000;
-
-    if (HAL_FDCAN_ConfigFilter(&hfdcan3, &FDCAN3_FilterConfig) != HAL_OK) {
+    if (HAL_FDCAN_ConfigFilter(&hfdcan3, &FilterConfig) != HAL_OK) {
         Error_Handler();
     }
 
@@ -143,6 +145,14 @@ void bsp_can_init(void) {
     if (HAL_FDCAN_Start(&hfdcan3) != HAL_OK) {
         Error_Handler();
     }
+}
+
+void bsp_can_init(void) {
+
+    FDCAN1_Config();
+    FDCAN2_Config();
+    FDCAN3_Config();
+
 }
 
 /** FDCAN1接收中断处理 **/
@@ -218,11 +228,15 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN1_RxFrame.Header, FDCAN1_RxFrame.Data) == HAL_OK) {
             FDCAN1_RxFifo0RxHandler(&FDCAN1_RxFrame.Header.Identifier, FDCAN1_RxFrame.Data);
         }
-    } else if (hfdcan == &hfdcan2) {
+    }
+
+    if (hfdcan == &hfdcan2) {
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN2_RxFrame.Header, FDCAN2_RxFrame.Data) == HAL_OK) {
             FDCAN2_RxFifo0RxHandler(&FDCAN2_RxFrame.Header.Identifier, FDCAN2_RxFrame.Data);
         }
-    } else if (hfdcan == &hfdcan3) {
+    }
+
+    if (hfdcan == &hfdcan3) {
         if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &FDCAN3_RxFrame.Header, FDCAN3_RxFrame.Data) == HAL_OK) {
             FDCAN3_RxFifo0RxHandler(&FDCAN3_RxFrame.Header.Identifier, FDCAN3_RxFrame.Data);
         }

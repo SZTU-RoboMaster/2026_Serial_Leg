@@ -37,8 +37,8 @@ void Theta_EstimateKF_Init(KalmanFilter_t *Theta_EstimateKF)//初始化卡尔曼结构体
 
 static void Theta_EstimateKF_Update(KalmanFilter_t *Theta_EstimateKF, float theta_dot, float theta) {
     //卡尔曼滤波器测量值更新
-    Theta_EstimateKF->MeasuredVector[0] = theta;//测量速度
-    Theta_EstimateKF->MeasuredVector[1] = theta_dot;//测量加速度
+    Theta_EstimateKF->MeasuredVector[0] = theta;//测量角度
+    Theta_EstimateKF->MeasuredVector[1] = theta_dot;//测量角速度
 
     //卡尔曼滤波器更新函数
     Kalman_Filter_Update(Theta_EstimateKF);

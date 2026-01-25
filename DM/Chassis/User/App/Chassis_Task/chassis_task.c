@@ -197,40 +197,33 @@ static void get_IMU_info(void) {
 /** 更新底盘变量 **/
 static void chassis_variable_update(void) {
 
-    // 5.phi
+    /********************* phi phi_dot ***********************/
     chassis.leg_L.state_variable_feedback.phi = chassis.imu_reference.pitch_rad;
     chassis.leg_R.state_variable_feedback.phi = chassis.imu_reference.pitch_rad;
 
-    // 6.phi_dot
     chassis.leg_L.state_variable_feedback.phi_dot = chassis.imu_reference.pitch_gyro;
     chassis.leg_R.state_variable_feedback.phi_dot = chassis.imu_reference.pitch_gyro;
 
-    //theta_last
-    chassis.leg_L.state_variable_feedback.theta_last = chassis.leg_L.state_variable_feedback.theta;
-    chassis.leg_R.state_variable_feedback.theta_last = chassis.leg_R.state_variable_feedback.theta;
+    /********************* theta theta_dot ***********************/
 
     //1.theta
-    chassis.leg_L.state_variable_feedback.theta = cal_leg_theta(chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0,
-                                                                chassis.leg_L.state_variable_feedback.phi);
-    chassis.leg_R.state_variable_feedback.theta = cal_leg_theta(chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0,
-                                                                chassis.leg_R.state_variable_feedback.phi);
+    float L_theta_raw = PI / 2 - (chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad);
+    float R_theta_raw = PI / 2 - (chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0 + chassis.imu_reference.pitch_rad);
 
-    /*********************************************** 差分  待处理  ******************************************************************/
     //2. theta_dot
 
     chassis.leg_L.state_variable_feedback.theta_dot_last = chassis.leg_L.state_variable_feedback.theta_dot;
-
-    chassis.leg_L.state_variable_feedback.theta_dot =
-            (chassis.leg_L.state_variable_feedback.theta - chassis.leg_L.state_variable_feedback.theta_last) /
-            (CHASSIS_PERIOD * 0.001f);
-
     chassis.leg_R.state_variable_feedback.theta_dot_last = chassis.leg_R.state_variable_feedback.theta_dot;
 
-    chassis.leg_R.state_variable_feedback.theta_dot =
-            (chassis.leg_R.state_variable_feedback.theta - chassis.leg_R.state_variable_feedback.theta_last) /
-            (CHASSIS_PERIOD * 0.001f);
+    chassis.leg_L.state_variable_feedback.theta_dot = -(chassis.leg_L.vmc.forward_kinematics.fk_phi.d_phi0 +
+                                                        chassis.imu_reference.pitch_gyro);
+    chassis.leg_R.state_variable_feedback.theta_dot = -(chassis.leg_R.vmc.forward_kinematics.fk_phi.d_phi0 +
+                                                        chassis.imu_reference.pitch_gyro);
 
-    // 2.1 theta_ddot
+    theta_calc(&chassis.leg_L, L_theta_raw, chassis.leg_L.state_variable_feedback.theta_dot);
+    theta_calc(&chassis.leg_R, R_theta_raw, chassis.leg_R.state_variable_feedback.theta_dot);
+
+    // 2.1 theta_ddot 需要加低通滤波
     chassis.leg_L.state_variable_feedback.theta_ddot =
             (chassis.leg_L.state_variable_feedback.theta_dot - chassis.leg_L.state_variable_feedback.theta_dot_last) /
             (CHASSIS_PERIOD * 0.001f);
@@ -238,32 +231,6 @@ static void chassis_variable_update(void) {
             (chassis.leg_R.state_variable_feedback.theta_dot - chassis.leg_R.state_variable_feedback.theta_dot_last) /
             (CHASSIS_PERIOD * 0.001f);
 
-
-    //4.x_dot
-    chassis.leg_L.state_variable_feedback.x_dot = vel_acc[0];
-    chassis.leg_R.state_variable_feedback.x_dot = vel_acc[0];
-
-    //3.x
-    if ((chassis.chassis_ctrl_info.v_m_per_s != 0.0f) || (chassis.chassis_ctrl_mode == CHASSIS_INIT)) {
-        chassis.leg_L.state_variable_feedback.x = 0.0f;
-        chassis.leg_R.state_variable_feedback.x = 0.0f;
-    } else {
-        chassis.leg_L.state_variable_feedback.x +=
-                (CHASSIS_PERIOD * 0.001f) * chassis.leg_L.state_variable_feedback.x_dot;
-        chassis.leg_R.state_variable_feedback.x +=
-                (CHASSIS_PERIOD * 0.001f) * chassis.leg_R.state_variable_feedback.x_dot;
-    }
-
-    // 4.1 x_ddot
-    chassis.leg_L.state_variable_feedback.x_dot_last = chassis.leg_L.state_variable_feedback.x_dot;
-    chassis.leg_L.state_variable_feedback.x_ddot =
-            (chassis.leg_L.state_variable_feedback.x_dot - chassis.leg_L.state_variable_feedback.x_dot_last) /
-            (CHASSIS_PERIOD * 0.001f);
-
-    chassis.leg_R.state_variable_feedback.x_dot_last = chassis.leg_R.state_variable_feedback.x_dot;
-    chassis.leg_R.state_variable_feedback.x_ddot =
-            (chassis.leg_R.state_variable_feedback.x_dot - chassis.leg_R.state_variable_feedback.x_dot_last) /
-            (CHASSIS_PERIOD * 0.001f);
 }
 
 /** 计算驱动轮力矩 **/
@@ -406,14 +373,14 @@ static void chassis_init_task(void) {
 /** 底盘使能任务 **/
 static void chassis_enable_task(void) {
 
-    /** 更新五连杆参数 **/
-    vmc_calc();
+//    /** 更新五连杆参数 **/
+//    vmc_calc();
+//
+//    /** 更新底盘变量 **/
+//    chassis_variable_update();
 
     /** 速度融合 **/
     speed_calc();
-
-    /** 更新底盘变量 **/
-    chassis_variable_update();
 
     /** 计算驱动轮力矩 **/
     wheel_calc();
@@ -456,6 +423,12 @@ void chassis_task(void) {
 
     /** 获取传感器数据 **/
     get_IMU_info();
+
+    /** 更新五连杆参数 **/
+    vmc_calc();
+
+    /** 更新底盘变量 **/
+    chassis_variable_update();
 
     switch (chassis.chassis_ctrl_mode) {
         case CHASSIS_DISABLE: {

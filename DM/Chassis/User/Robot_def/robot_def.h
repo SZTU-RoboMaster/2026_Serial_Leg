@@ -16,17 +16,9 @@
  *******************************************************************************/
 
 /** 宏定义 **/
-#define LEG_22_F_POS 2.74f
-#define LEG_22_B_POS 0.60f
-
-
-//#define LEG_22_F_POS 2.74f - (20 * DEGREE_TO_RAD)
-//#define LEG_22_B_POS 0.60f + (20 * DEGREE_TO_RAD)
 
 // 底盘运行周期
-#define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
-
-#define BALANCE_POINT (-0.078f)
+#define CHASSIS_PERIOD 2 // ms 计算频率 不宜过低
 
 #define RPM_TO_RAD_PER_S (PI/ 30) // (rad/s) = (rpm) * (pi/30)
 #define RPM_TO_M_PER_S (PI * chassis_physical_config.wheel_radius) / 30
@@ -125,22 +117,6 @@ typedef enum {
     CHASSIS_JUMP, // 跳跃模式
 } ChassisCtrlMode;
 
-/** 底盘状态结构体 -- 用于倒地自救 **/
-typedef enum {
-    CHASSIS_BODY_UNNORMAL,
-    CHASSIS_BODY_NORMAL,
-} ChassisBodyState;
-
-typedef enum {
-    CHASSIS_FALL_LEG_UNNORMAL,
-    CHASSIS_FALL_LEG_NORMAL,
-} ChassisFallLegState;
-
-typedef enum {
-    CHASSIS_COULD_NOT_RECOVER,
-    CHASSIS_COULD_RECOVER,
-} ChassisRecoverState;
-
 
 typedef struct {
     float v_m_per_s; // 期望速度
@@ -153,15 +129,6 @@ typedef struct {
 } ChassisCtrlInfo;
 
 
-/** 跳跃状态结构体 **/
-typedef enum {
-    NOT_READY,
-    READY, // 第一阶段：收腿蓄力
-    STRETCHING, // 第二阶段：伸腿蹬地
-    SHRINKING, // 第三阶段：空中收腿
-    LANDING, // 第四阶段：落地
-} JumpState;
-
 /** 传感器结构体 **/
 typedef struct {
     // 欧拉角
@@ -172,7 +139,6 @@ typedef struct {
     float yaw_last_rad;
     int16_t yaw_round_count;
     float yaw_total_rad;
-
 
     //三轴角速度
     float pitch_gyro;
@@ -197,7 +163,6 @@ typedef struct {
 typedef struct {
     float theta; // 状态变量1
     float theta_dot; // 状态变量2
-    float theta_last;
     float theta_dot_last;
     float theta_ddot;
 
@@ -307,7 +272,7 @@ typedef struct {
         } E;
     } Fxy_fdb;
 
-    /** 逆运动学解算(Inverse Dynamics): 从 末端执行器(w1 w4) 到 末端编码(d_L0 d_phi0) **/
+
     union {
         float array[2][1];
         struct {
@@ -338,6 +303,7 @@ typedef struct {
     } V_fdb;
 
 } InverseKinematics;
+
 
 /** 腿部VMC结构体 **/
 typedef struct {
@@ -422,7 +388,6 @@ typedef struct {
     bool chassis_recover_finish;
 
 } Chassis;
-
 
 extern float Kd;
 extern float vel;

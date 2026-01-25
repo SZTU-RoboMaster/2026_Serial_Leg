@@ -17,40 +17,31 @@ extern ChassisPhysicalConfig chassis_physical_config;
  *    phi1                      phi1
  */
 
+
 void vmc_phi_update(Leg *leg_L, Leg *leg_R) {
 
+    // 角度
     float LF_joint_pos = (get_joint_motors() + 0)->pos_r;
     float LB_joint_pos = (get_joint_motors() + 1)->pos_r;
     float RF_joint_pos = (get_joint_motors() + 2)->pos_r;
     float RB_joint_pos = (get_joint_motors() + 3)->pos_r;
 
-    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos - 0.041f;
-    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.11f;
-    leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos;
-    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos;
+    leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos + 0.04f;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos - 0.02f;
+    leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos + 0.04f;
+    leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos - 0.07f;
 
-}
+    // 角速度
+    float LF_joint_speed = (get_joint_motors() + 0)->angular_vel;
+    float LB_joint_speed = (get_joint_motors() + 1)->angular_vel;
+    float RF_joint_speed = (get_joint_motors() + 2)->angular_vel;
+    float RB_joint_speed = (get_joint_motors() + 3)->angular_vel;
 
-/** 计算状态变量theta **/
-float cal_leg_theta(float phi0, float phi) {
-    float theta = 0, alpha = 0;//alpha is the Angle at which the virtual joint motor is turned
-    alpha = PI / 2 - phi0;
+    leg_L->vmc.forward_kinematics.fk_phi.phi1_dot = LF_joint_speed;
+    leg_L->vmc.forward_kinematics.fk_phi.phi4_dot = LB_joint_speed;
+    leg_R->vmc.forward_kinematics.fk_phi.phi1_dot = -RF_joint_speed;
+    leg_R->vmc.forward_kinematics.fk_phi.phi4_dot = -RB_joint_speed;
 
-    if (alpha * phi < 0) {
-        theta = ABS(alpha) - ABS(phi);
-        if ((alpha > 0) && (phi < 0)) {
-            theta *= -1;
-        } else {
-
-        }
-    } else {
-        theta = ABS(alpha) + ABS(phi);
-        if ((alpha < 0) && (phi < 0)) {
-        } else {
-            theta *= -1;
-        }
-    }
-    return theta;
 }
 
 // vmc正运动学解算
@@ -61,7 +52,7 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
     float temp_y = 0;
     float temp_x = 0;
 
-    /** phi2 **/
+    /** 1、phi2 **/
     leg->vmc.forward_kinematics.fk_point_coordinates.b_x =
             physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1);
     leg->vmc.forward_kinematics.fk_point_coordinates.b_y =
@@ -91,7 +82,7 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
 
     leg->vmc.forward_kinematics.fk_phi.phi2 = 2.0f * atan2f(temp_y, temp_x);
 
-    /** C点直角坐标 **/
+    /** 2、C点直角坐标 **/
     leg->vmc.forward_kinematics.fk_point_coordinates.c_x =
             physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1) +
             physical_config->l2 * cosf(leg->vmc.forward_kinematics.fk_phi.phi2);
@@ -99,21 +90,22 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
             physical_config->l1 * sinf(leg->vmc.forward_kinematics.fk_phi.phi1) +
             physical_config->l2 * sinf(leg->vmc.forward_kinematics.fk_phi.phi2);
 
-    /** phi3 **/
+    /** 3、phi3 **/
     temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y -
              leg->vmc.forward_kinematics.fk_point_coordinates.d_y;
     temp_x = leg->vmc.forward_kinematics.fk_point_coordinates.c_x -
              leg->vmc.forward_kinematics.fk_point_coordinates.d_x;
     leg->vmc.forward_kinematics.fk_phi.phi3 = atan2f(temp_y, temp_x);
 
-    /** 腿长(L0) **/
+    /** 4、腿长(L0) **/
     temp = (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f) *
            (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
            + leg->vmc.forward_kinematics.fk_point_coordinates.c_y *
              leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
     leg->vmc.forward_kinematics.fk_L0.L0 = sqrtf(ABS(temp));
 
-    /** 精确求解L0_dot **/
+    /** 5、精确求解L0_dot **/
+    // 求A1
     temp_y = physical_config->l1 * leg->vmc.forward_kinematics.fk_phi.phi1_dot *
              sinf(leg->vmc.forward_kinematics.fk_phi.phi1 - leg->vmc.forward_kinematics.fk_phi.phi3) +
              physical_config->l4 * leg->vmc.forward_kinematics.fk_phi.phi4_dot *
@@ -129,6 +121,7 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
     float Yb_dot = physical_config->l1 * leg->vmc.forward_kinematics.fk_phi.phi1_dot *
                    cosf(leg->vmc.forward_kinematics.fk_phi.phi1);
 
+    // 求L0_dot
     temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y *
              (Yb_dot + A1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi2)) +
              (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - (physical_config->l5 / 2.0f)) *
@@ -138,17 +131,18 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
     leg->vmc.forward_kinematics.fk_L0.L0_dot_last = leg->vmc.forward_kinematics.fk_L0.L0_dot;
     leg->vmc.forward_kinematics.fk_L0.L0_dot = temp_y / temp_x;
 
-    /** 腿长L0_ddot差分求解 应加低通滤波 **/
+    /**  6、腿长L0_ddot差分求解 应加低通滤波 **/
     leg->vmc.forward_kinematics.fk_L0.L0_ddot =
             (leg->vmc.forward_kinematics.fk_L0.L0_dot - leg->vmc.forward_kinematics.fk_L0.L0_dot_last)
             / (CHASSIS_PERIOD * 0.001f);
 
-    /** 腿摆角（phi0） **/
+    /**  7、腿摆角（phi0） **/
     temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
     temp_x = leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f;
     leg->vmc.forward_kinematics.fk_phi.phi0 = atan2f(temp_y, temp_x);
 
-    /** 精确求解phi0_dot **/
+    /** 8、精确求解phi0_dot **/
+    // 求phi0_dot
     temp_y = (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - (physical_config->l5 / 2.0f)) *
              (Yb_dot + A1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi2)) -
              leg->vmc.forward_kinematics.fk_point_coordinates.c_y *
@@ -158,7 +152,7 @@ static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
     leg->vmc.forward_kinematics.fk_phi.last_d_phi0 = leg->vmc.forward_kinematics.fk_phi.d_phi0;
     leg->vmc.forward_kinematics.fk_phi.d_phi0 = temp_y / temp_x;
 
-    /** phi0_ddot 差分求解 **/
+    /**  9、phi0_ddot 差分求解 **/
     leg->vmc.forward_kinematics.fk_phi.dd_phi0 =
             (leg->vmc.forward_kinematics.fk_phi.d_phi0 - leg->vmc.forward_kinematics.fk_phi.last_d_phi0)
             / (CHASSIS_PERIOD * 0.001f);
@@ -332,6 +326,7 @@ static void fn_cal(Leg *leg, float body_az, ChassisPhysicalConfig *chassis_physi
 /*******************************************************************************
  *                                     VMC                                     *
  *******************************************************************************/
+
 void vmc_calc(void) {
 
     // 更新phi1 phi4
@@ -341,4 +336,6 @@ void vmc_calc(void) {
     forward_kinematics(&chassis.leg_L, &chassis_physical_config);
     forward_kinematics(&chassis.leg_R, &chassis_physical_config);
 
+    // 腿部协调处理
+    leg_coordinate_handle();
 }

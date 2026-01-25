@@ -83,4 +83,33 @@ void speed_calc(void) {
     aver_v = (v_lb + v_rb) / 2;
 
     Speed_EstimateKF_Update(&Speed_EstimateKF, chassis.imu_reference.robot_ax, aver_v);//不断更新卡尔曼滤波中的各项参数
+
+
+    /********************* x x_dot ***********************/
+    //4.x_dot
+    chassis.leg_L.state_variable_feedback.x_dot = vel_acc[0];
+    chassis.leg_R.state_variable_feedback.x_dot = vel_acc[0];
+
+    //3.x
+    if (chassis.chassis_ctrl_info.v_m_per_s != 0.0f) {
+        chassis.leg_L.state_variable_feedback.x = 0.0f;
+        chassis.leg_R.state_variable_feedback.x = 0.0f;
+    } else {
+        chassis.leg_L.state_variable_feedback.x +=
+                (CHASSIS_PERIOD * 0.001f) * chassis.leg_L.state_variable_feedback.x_dot;
+        chassis.leg_R.state_variable_feedback.x +=
+                (CHASSIS_PERIOD * 0.001f) * chassis.leg_R.state_variable_feedback.x_dot;
+    }
+
+    // 4.1 x_ddot
+    chassis.leg_L.state_variable_feedback.x_dot_last = chassis.leg_L.state_variable_feedback.x_dot;
+    chassis.leg_L.state_variable_feedback.x_ddot =
+            (chassis.leg_L.state_variable_feedback.x_dot - chassis.leg_L.state_variable_feedback.x_dot_last) /
+            (CHASSIS_PERIOD * 0.001f);
+
+    chassis.leg_R.state_variable_feedback.x_dot_last = chassis.leg_R.state_variable_feedback.x_dot;
+    chassis.leg_R.state_variable_feedback.x_ddot =
+            (chassis.leg_R.state_variable_feedback.x_dot - chassis.leg_R.state_variable_feedback.x_dot_last) /
+            (CHASSIS_PERIOD * 0.001f);
+
 }
