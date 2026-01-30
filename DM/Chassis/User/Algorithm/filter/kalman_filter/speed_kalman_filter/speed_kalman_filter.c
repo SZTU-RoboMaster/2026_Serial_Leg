@@ -39,7 +39,7 @@ void Speed_EstimateKF_Init(KalmanFilter_t *Speed_EstimateKF)//初始化卡尔曼结构体
 
 }
 
-static void Speed_EstimateKF_Update(KalmanFilter_t *Speed_EstimateKF, float acc, float vel) {
+static void Speed_EstimateKF_Update(KalmanFilter_t *Speed_EstimateKF, float vel, float acc) {
     //卡尔曼滤波器测量值更新
     Speed_EstimateKF->MeasuredVector[0] = vel;//测量速度
     Speed_EstimateKF->MeasuredVector[1] = acc;//测量加速度
@@ -82,7 +82,7 @@ void speed_calc(void) {
 
     aver_v = (v_lb + v_rb) / 2;
 
-    Speed_EstimateKF_Update(&Speed_EstimateKF, chassis.imu_reference.robot_ax, aver_v);//不断更新卡尔曼滤波中的各项参数
+    Speed_EstimateKF_Update(&Speed_EstimateKF, aver_v, chassis.imu_reference.robot_ax);//不断更新卡尔曼滤波中的各项参数
 
 
     /********************* x x_dot ***********************/

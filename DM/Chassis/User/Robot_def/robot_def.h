@@ -20,10 +20,10 @@
 #define PHI1_OFFSET 2.20f
 #define PHI4_OFFSET 1.10f
 
-
+#define THETA_OFFSET 0.1f // 0.1rad
 
 // 底盘运行周期
-#define CHASSIS_PERIOD 2 // ms 计算频率 不宜过低
+#define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
 
 #define RPM_TO_RAD_PER_S (PI/ 30) // (rad/s) = (rpm) * (pi/30)
 #define RPM_TO_M_PER_S (PI * chassis_physical_config.wheel_radius) / 30
@@ -332,7 +332,6 @@ typedef struct {
 
     /** 状态变量 **/
     StateVariable state_variable_feedback;  // 反馈状态变量
-    StateVariable state_variable_set_point; // 期望状态变量
     StateVariable state_variable_error;     // 误差 = 反馈 - 期望
     StateVariable state_variable_wheel_out; // 各个状态变量通过lqr计算的关于轮毂的输出
     StateVariable state_variable_joint_out; // 各个状态变量通过lqr计算的关于关节的输出

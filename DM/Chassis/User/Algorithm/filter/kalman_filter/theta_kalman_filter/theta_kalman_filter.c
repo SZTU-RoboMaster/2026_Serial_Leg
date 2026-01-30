@@ -35,7 +35,7 @@ void Theta_EstimateKF_Init(KalmanFilter_t *Theta_EstimateKF)//初始化卡尔曼结构体
 
 }
 
-static void Theta_EstimateKF_Update(KalmanFilter_t *Theta_EstimateKF, float theta_dot, float theta) {
+static void Theta_EstimateKF_Update(KalmanFilter_t *Theta_EstimateKF, float theta, float theta_dot) {
     //卡尔曼滤波器测量值更新
     Theta_EstimateKF->MeasuredVector[0] = theta;//测量角度
     Theta_EstimateKF->MeasuredVector[1] = theta_dot;//测量角速度
@@ -45,10 +45,11 @@ static void Theta_EstimateKF_Update(KalmanFilter_t *Theta_EstimateKF, float thet
 
 }
 
-float theta_calc(Leg *leg, float theta, float theta_dot) {
+void theta_KF_calc(Leg *leg, float theta, float theta_dot) {
 
-    Theta_EstimateKF_Update(&Theta_EstimateKF, theta_dot, theta);
+    Theta_EstimateKF_Update(&Theta_EstimateKF, theta, theta_dot);
 
-    // 提取估计值
-    return Theta_EstimateKF.FilteredValue[0];
+    leg->state_variable_feedback.theta = Theta_EstimateKF.FilteredValue[0];
+    leg->state_variable_feedback.theta_dot = Theta_EstimateKF.FilteredValue[1];
+
 }
