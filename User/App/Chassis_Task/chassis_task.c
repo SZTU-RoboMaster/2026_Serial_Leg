@@ -595,8 +595,8 @@
         // Q_mat = diag([0.1 0.01 200 10 200 10]); Q_mat = diag([1 1 200 10 200 10]); -0.35f -0.4f的时候三个都开能正常移动
         // Q_mat = diag([1 1 200 10 400 10]);
             chassis.leg_L.wheel_torque_lqr =
-                // - wheel_K_L[0] * (-chassis.leg_L.state_variable_feedback.theta - 0.0f)
-                // - wheel_K_L[1] * (-chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+                - wheel_K_L[0] * (-chassis.leg_L.state_variable_feedback.theta - 0.0f)
+                - wheel_K_L[1] * (-chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
                 - wheel_K_L[2] * (-chassis.leg_L.state_variable_feedback.x - 0.0f)
                 - wheel_K_L[3] * (-chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                 // - wheel_K_L[4] * (-chassis.leg_L.state_variable_feedback.phi - 0.0f)
@@ -604,8 +604,8 @@
                 ;
 
             chassis.leg_R.wheel_torque_lqr =
-                // - wheel_K_R[0] * (-chassis.leg_R.state_variable_feedback.theta - 0.0f)
-                // - wheel_K_R[1] * (-chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                - wheel_K_R[0] * (-chassis.leg_R.state_variable_feedback.theta - 0.0f)
+                - wheel_K_R[1] * (-chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
                 - wheel_K_R[2] * (-chassis.leg_R.state_variable_feedback.x - 0.0f)
                 - wheel_K_R[3] * (-chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                 // - wheel_K_R[4] * (-chassis.leg_R.state_variable_feedback.phi - 0.0f)
@@ -1061,12 +1061,12 @@
 
         /* ============================= 倒地自救 ============================= */
 
-            // if (chassis.chassis_recover_finish == false)
-            // {
-            //     chassis.where_to_ready = horizon;
-            //     // chassis.where_to_ready = balance;
-            //     chassis_selfhelp(chassis.where_to_ready);
-            // }
+            if (chassis.chassis_recover_finish == false)
+            {
+                chassis.where_to_ready = horizon;
+                // chassis.where_to_ready = balance;
+                chassis_selfhelp(chassis.where_to_ready);
+            }
 
     }
 

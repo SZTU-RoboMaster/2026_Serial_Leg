@@ -647,6 +647,10 @@ typedef struct {
 
                         Pid chassis_leg_coordination_pid;
 
+                    /* =========================== ·ÀÅü²æPID ============================= */
+
+                        Pid chassis_pitch_pid;
+
                     /* =========================== ·ÀÅü²æ²¹³¥Á¦¾Ø ============================= */
 
                         float steer_compensatory_torque;
