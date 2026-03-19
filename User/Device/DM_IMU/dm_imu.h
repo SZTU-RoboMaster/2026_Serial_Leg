@@ -5,12 +5,6 @@
 
 #define RX_LEN   80
 
-/* =========================== 达妙坐标轴 ============================= */
-
-    #define X 0
-    #define Y 1
-    #define Z 2
-
 /* =========================== 达妙IMU ============================= */
 
     typedef struct
@@ -35,7 +29,7 @@
     } Dm_imu_t;
 
 /** 加速度、角速度、姿态角的帧格式（每一帧都是19个字节） **/
-#pragma (1)
+
 typedef struct {
     // 帧头
     uint8_t header;
@@ -58,10 +52,10 @@ typedef struct {
     uint8_t tail;
 
 } normal_packet_t;
-#pragma ()
+
 
 /** 四元数的帧格式（） **/
-#pragma (1)
+
 typedef struct {
     uint8_t header;
     uint8_t tag;
@@ -70,15 +64,17 @@ typedef struct {
     float data[4];
     uint16_t crc;
     uint8_t tail;
-
 } normal_ext_packet_t;
-#pragma ()
+
 
 void DM_IMU_Init(void);
 
 void imu_data_unpack(uint8_t *pData);
 
+void IMU_Position_Compensation(float *accel_raw, float *gyro, float *gyro_dot);
+
 extern Dm_imu_t DM_IMU;
+extern Dm_imu_t chassis_imu_reference;
 extern uint8_t uRx[RX_LEN];
 
 #endif

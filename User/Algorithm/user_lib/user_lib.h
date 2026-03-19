@@ -37,7 +37,7 @@
 
     /* =========================== 角度-弧度 ============================= */
 
-        #define DEGREE_TO_RAD PI/180
+        #define DEGREE_TO_RAD PI/180.0f
 
     /* =========================== 弧度-角度 ============================= */
 
@@ -79,7 +79,7 @@ typedef  struct
     float frame_period; //滤波的时间间隔 单位 s
 }__packed first_order_filter_type_t;
 
-typedef __packed struct
+typedef struct
 {
     uint16_t Order;
     uint32_t Count;

@@ -1,5 +1,7 @@
 #ifndef _INS_TASK_H
 #define _INS_TASK_H
+#include <QuaternionEKF.h>
+
 
 typedef struct {
     float q[4]; // 四元数估计值
@@ -18,7 +20,9 @@ typedef struct {
 } INS_t;
 
 void INS_Init(void);
-
 void Body_Accel_To_Earth(void);
+extern INS_t INS;
+extern QEKF_INS_t QEKF_INS;
+extern uint32_t INS_DWT_Count;
 
 #endif

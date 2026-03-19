@@ -6,8 +6,8 @@
 
 /********************   电机参数限制   *****************************/
 
-#define DM8009P_P_MIN -12.5f
-#define DM8009P_P_MAX 12.5f
+#define DM8009P_P_MIN -3.14f
+#define DM8009P_P_MAX 3.14f
 #define DM8009P_V_MIN -45.0f
 #define DM8009P_V_MAX 45.0f
 #define DM8009P_KP_MIN 0.0f
@@ -28,6 +28,11 @@ typedef struct {
 
     /** 关节电机反馈力矩 **/
     float torque;
+
+    float Temp_mos;
+    float Temp_motor;
+    float Error;
+
 } Dm8009P;
 
 /** 初始化电机ID **/

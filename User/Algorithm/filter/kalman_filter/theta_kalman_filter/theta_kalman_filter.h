@@ -5,12 +5,12 @@
 #include "robot_def.h"
 
 // Q
-#define THETA_PROCESS_NOISE 2000.0f      // �ڽǹ�������
-#define THETA_DOT_PROCESS_NOISE 2000.0f  // �ڽǽ��ٶȹ�������
+#define THETA_PROCESS_NOISE 20.0f      // �ڽǹ�������
+#define THETA_DOT_PROCESS_NOISE 20.0f  // �ڽǽ��ٶȹ�������
 
 // R
 #define THETA_MEASURE_NOISE 10.0f      // �ڽǲ�������  ����Ҫȷ���ǶȲ�ʧ��
-#define THETA_DOT_MEASURE_NOISE 2000.0f  // �ڽǽ��ٶȲ�������
+#define THETA_DOT_MEASURE_NOISE 20.0f  // �ڽǽ��ٶȲ�������
 
 void Theta_EstimateKF_Init(KalmanFilter_t *Theta_EstimateKF);
 

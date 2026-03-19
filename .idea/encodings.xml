@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/CMakeLists.txt" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/QuaternionEKF/QuaternionEKF.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/QuaternionEKF/QuaternionEKF.h" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/controller/controller.c" charset="GBK" />
@@ -15,10 +16,12 @@
     <file url="file://$PROJECT_DIR$/User/Algorithm/vmc/vmc.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/App/Chassis_Task/chassis_task.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/App/INS_Task/ins_task.c" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/User/App/INS_Task/ins_task.h" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Bsp/dwt/bsp_dwt.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Bsp/usart/bsp_usart.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Device/DM_IMU/dm_imu.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Device/motor/joint/DM8009P/dm_8009p.c" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/User/Device/motor/joint/DM8009P/dm_8009p.h" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Device/motor/joint/joint.h" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Device/motor/wheel/DJI/DJI_motor.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Device/motor/wheel/DJI/DJI_motor.h" charset="GBK" />

@@ -6,6 +6,9 @@
 #include "vmc.h"
 #include "user_lib.h"
 #include "joint.h"
+#include "L0_kalman_filter.h"
+#include "phi0_kalman_filter.h"
+#include "phi4_kalman_filter.h"
 #include "vofa.h"
 
 extern Chassis chassis;
@@ -31,12 +34,12 @@ extern ChassisPhysicalConfig chassis_physical_config;
 
         /* ========================= 1.2.2 实际phi1 phi4 ========================= */
 
-            /* ========================= 关节电机零点设置在下限位处，当各电机处于零点处时，机体在腿长最短位置平衡，phi1为π，phi4为0（弧度制） ========================= */
+            /* ========================= 大腿小腿分别向正方向 设对应电机零点 ========================= */
 
-            leg_L->vmc.forward_kinematics.fk_phi.phi1 = LF_joint_pos + PHI1_OFFSET;
-            leg_L->vmc.forward_kinematics.fk_phi.phi4 = LB_joint_pos + PHI4_OFFSET;
-            leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RF_joint_pos + PHI1_OFFSET;
-            leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RB_joint_pos + PHI4_OFFSET;
+            leg_L->vmc.forward_kinematics.fk_phi.phi1 = LB_joint_pos + PHI1_OFFSET;
+            leg_L->vmc.forward_kinematics.fk_phi.phi4 = LF_joint_pos + PHI4_OFFSET;
+            leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RB_joint_pos + PHI1_OFFSET;
+            leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RF_joint_pos + PHI4_OFFSET;
 
         /* ========================= 1.2.1 初始phi1‘ phi4’ ========================= */
 
@@ -47,10 +50,16 @@ extern ChassisPhysicalConfig chassis_physical_config;
 
         /* ========================= 1.2.2 实际phi1’ phi4‘ ========================= */
 
-            leg_L->vmc.forward_kinematics.fk_phi.phi1_dot = LF_joint_speed;
-            leg_L->vmc.forward_kinematics.fk_phi.phi4_dot = LB_joint_speed;
-            leg_R->vmc.forward_kinematics.fk_phi.phi1_dot = -RF_joint_speed;
-            leg_R->vmc.forward_kinematics.fk_phi.phi4_dot = -RB_joint_speed;
+            leg_L->vmc.forward_kinematics.fk_phi.phi4_dot = LF_joint_speed;
+            leg_L->vmc.forward_kinematics.fk_phi.phi1_dot = LB_joint_speed;
+            leg_R->vmc.forward_kinematics.fk_phi.phi4_dot = -RF_joint_speed;
+            leg_R->vmc.forward_kinematics.fk_phi.phi1_dot = -RB_joint_speed;
+
+
+        /* =========================== 2.4 phi4 phi4'融合 =========================== */
+
+            // PHI4_KF_calc(&PHI4_EstimateKF, &chassis.leg_L, leg_L->vmc.forward_kinematics.fk_phi.phi4_raw, leg_L->vmc.forward_kinematics.fk_phi.phi4_dot_raw);
+            // PHI4_KF_calc(&PHI4_EstimateKF, &chassis.leg_R, leg_R->vmc.forward_kinematics.fk_phi.phi4_raw, leg_R->vmc.forward_kinematics.fk_phi.phi4_dot_raw);
 
     }
 
@@ -58,78 +67,77 @@ extern ChassisPhysicalConfig chassis_physical_config;
 
     static void forward_kinematics(Leg *leg, ChassisPhysicalConfig *physical_config)
     {
-
         /* =========================== 中间变量 =========================== */
 
-            float temp=0,temp_y=0,temp_x=0;
+        float temp=0,temp_y=0,temp_x=0;
 
         /* =========================== 1.3  B,D坐标 =========================== */
 
-            leg->vmc.forward_kinematics.fk_point_coordinates.b_x = physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1);
-            leg->vmc.forward_kinematics.fk_point_coordinates.b_y = physical_config->l1 * sinf(leg->vmc.forward_kinematics.fk_phi.phi1);
-            leg->vmc.forward_kinematics.fk_point_coordinates.d_x = physical_config->l5 + physical_config->l4 * cosf(leg->vmc.forward_kinematics.fk_phi.phi4);
-            leg->vmc.forward_kinematics.fk_point_coordinates.d_y = physical_config->l4 * sinf(leg->vmc.forward_kinematics.fk_phi.phi4);
+        leg->vmc.forward_kinematics.fk_point_coordinates.b_x = physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1);
+        leg->vmc.forward_kinematics.fk_point_coordinates.b_y = physical_config->l1 * sinf(leg->vmc.forward_kinematics.fk_phi.phi1);
+        leg->vmc.forward_kinematics.fk_point_coordinates.d_x = physical_config->l5 + physical_config->l4 * cosf(leg->vmc.forward_kinematics.fk_phi.phi4);
+        leg->vmc.forward_kinematics.fk_point_coordinates.d_y = physical_config->l4 * sinf(leg->vmc.forward_kinematics.fk_phi.phi4);
 
         /* =========================== 1.4  lBD^2  =========================== */
 
-            float L_BD_sq =
-                (leg->vmc.forward_kinematics.fk_point_coordinates.d_x - leg->vmc.forward_kinematics.fk_point_coordinates.b_x)
-                * (leg->vmc.forward_kinematics.fk_point_coordinates.d_x - leg->vmc.forward_kinematics.fk_point_coordinates.b_x)
-                + (leg->vmc.forward_kinematics.fk_point_coordinates.d_y - leg->vmc.forward_kinematics.fk_point_coordinates.b_y)
-                * (leg->vmc.forward_kinematics.fk_point_coordinates.d_y - leg->vmc.forward_kinematics.fk_point_coordinates.b_y);
+        float L_BD_sq =
+            (leg->vmc.forward_kinematics.fk_point_coordinates.d_x - leg->vmc.forward_kinematics.fk_point_coordinates.b_x)
+            * (leg->vmc.forward_kinematics.fk_point_coordinates.d_x - leg->vmc.forward_kinematics.fk_point_coordinates.b_x)
+            + (leg->vmc.forward_kinematics.fk_point_coordinates.d_y - leg->vmc.forward_kinematics.fk_point_coordinates.b_y)
+            * (leg->vmc.forward_kinematics.fk_point_coordinates.d_y - leg->vmc.forward_kinematics.fk_point_coordinates.b_y);
 
         /* =========================== 1.5  phi2 =========================== */
 
-            float L_A0 =
-                2.0f * physical_config->l2
-                * (leg->vmc.forward_kinematics.fk_point_coordinates.d_x
-                - leg->vmc.forward_kinematics.fk_point_coordinates.b_x);
-            float L_B0 =
-                2.0f * physical_config->l2
-                * (leg->vmc.forward_kinematics.fk_point_coordinates.d_y
-                - leg->vmc.forward_kinematics.fk_point_coordinates.b_y);
-            float L_C0 =
-                physical_config->l2 * physical_config->l2
-                + L_BD_sq
-                - physical_config->l3 * physical_config->l3;
-            temp = L_A0 * L_A0 + L_B0 * L_B0 - L_C0 * L_C0;
-            temp_y = L_B0 + sqrtf(ABS(temp));
-            temp_x = L_A0 + L_C0;
-            leg->vmc.forward_kinematics.fk_phi.phi2 = 2.0f * atan2f(temp_y, temp_x);
+        float L_A0 =
+            2.0f * physical_config->l2
+            * (leg->vmc.forward_kinematics.fk_point_coordinates.d_x
+            - leg->vmc.forward_kinematics.fk_point_coordinates.b_x);
+        float L_B0 =
+            2.0f * physical_config->l2
+            * (leg->vmc.forward_kinematics.fk_point_coordinates.d_y
+            - leg->vmc.forward_kinematics.fk_point_coordinates.b_y);
+        float L_C0 =
+            physical_config->l2 * physical_config->l2
+            + L_BD_sq
+            - physical_config->l3 * physical_config->l3;
+        temp = L_A0 * L_A0 + L_B0 * L_B0 - L_C0 * L_C0;
+        temp_y = L_B0 - sqrtf(ABS(temp));
+        temp_x = L_A0 + L_C0;
+        leg->vmc.forward_kinematics.fk_phi.phi2 = 2.0f * atan2f(temp_y, temp_x);
 
         /* =========================== 1.6  xC,yC =========================== */
 
-            leg->vmc.forward_kinematics.fk_point_coordinates.c_x =
-                physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1)
-                + physical_config->l2 * cosf(leg->vmc.forward_kinematics.fk_phi.phi2);
-            leg->vmc.forward_kinematics.fk_point_coordinates.c_y =
-                physical_config->l1 * sinf(leg->vmc.forward_kinematics.fk_phi.phi1)
-                + physical_config->l2 * sinf(leg->vmc.forward_kinematics.fk_phi.phi2);
+        leg->vmc.forward_kinematics.fk_point_coordinates.c_x =
+            physical_config->l1 * cosf(leg->vmc.forward_kinematics.fk_phi.phi1)
+            + physical_config->l2 * cosf(leg->vmc.forward_kinematics.fk_phi.phi2);
+        leg->vmc.forward_kinematics.fk_point_coordinates.c_y =
+            physical_config->l1 * sinf(leg->vmc.forward_kinematics.fk_phi.phi1)
+            + physical_config->l2 * sinf(leg->vmc.forward_kinematics.fk_phi.phi2);
 
         /* =========================== 1.7 phi3 =========================== */
 
-            temp_y =
-                leg->vmc.forward_kinematics.fk_point_coordinates.c_y
-                - leg->vmc.forward_kinematics.fk_point_coordinates.d_y;
-            temp_x =
-                leg->vmc.forward_kinematics.fk_point_coordinates.c_x
-                - leg->vmc.forward_kinematics.fk_point_coordinates.d_x;
-            leg->vmc.forward_kinematics.fk_phi.phi3 = atan2f(temp_y, temp_x);
+        temp_y =
+            leg->vmc.forward_kinematics.fk_point_coordinates.c_y
+            - leg->vmc.forward_kinematics.fk_point_coordinates.d_y;
+        temp_x =
+            leg->vmc.forward_kinematics.fk_point_coordinates.c_x
+            - leg->vmc.forward_kinematics.fk_point_coordinates.d_x;
+        leg->vmc.forward_kinematics.fk_phi.phi3 = atan2f(temp_y, temp_x);
 
         /* =========================== 1.8  L0 =========================== */
 
-            temp =
-                (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
-                * (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
-                + leg->vmc.forward_kinematics.fk_point_coordinates.c_y
-                * leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
-            leg->vmc.forward_kinematics.fk_L0.L0 = sqrtf(ABS(temp));
+        temp =
+            (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
+            * (leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f)
+            + leg->vmc.forward_kinematics.fk_point_coordinates.c_y
+            * leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
+        leg->vmc.forward_kinematics.fk_L0.L0 = sqrtf(ABS(temp));
 
         /* =========================== 1.8  phi0 =========================== */
 
-            temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
-            temp_x = leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f;
-            leg->vmc.forward_kinematics.fk_phi.phi0 = atan2f(temp_y, temp_x);
+        temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
+        temp_x = leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f;
+        leg->vmc.forward_kinematics.fk_phi.phi0 = atan2f(temp_y, temp_x);
 
 
         /** 5、精确求解L0_dot **/
@@ -159,15 +167,21 @@ extern ChassisPhysicalConfig chassis_physical_config;
         leg->vmc.forward_kinematics.fk_L0.L0_dot_last = leg->vmc.forward_kinematics.fk_L0.L0_dot;
         leg->vmc.forward_kinematics.fk_L0.L0_dot = temp_y / temp_x;
 
-        /**  6、腿长L0_ddot差分求解 应加低通滤波 **/
-        leg->vmc.forward_kinematics.fk_L0.L0_ddot =
-                (leg->vmc.forward_kinematics.fk_L0.L0_dot - leg->vmc.forward_kinematics.fk_L0.L0_dot_last)
-                / (CHASSIS_PERIOD * 0.001f);
 
-        /**  7、腿摆角（phi0） **/
-        temp_y = leg->vmc.forward_kinematics.fk_point_coordinates.c_y;
-        temp_x = leg->vmc.forward_kinematics.fk_point_coordinates.c_x - physical_config->l5 * 0.5f;
-        leg->vmc.forward_kinematics.fk_phi.phi0 = atan2f(temp_y, temp_x);
+        // /* =========================== L0 L0'融合 =========================== */
+        //
+        // L0_KF_calc(&L0_EstimateKF, leg, leg->vmc.forward_kinematics.fk_L0.L0_raw, leg->vmc.forward_kinematics.fk_L0.L0_dot_raw);
+        //
+        // /**  6、腿长L0_ddot差分求解 **/
+        // leg->vmc.forward_kinematics.fk_L0.L0_ddot =
+        //         (leg->vmc.forward_kinematics.fk_L0.L0_dot - leg->vmc.forward_kinematics.fk_L0.L0_dot_last)
+        //         / (CHASSIS_PERIOD * 0.001f);
+        // leg->vmc.forward_kinematics.fk_L0.L0_ddot_raw = update_low_pass_filter(&leg->L0_ddot,leg->vmc.forward_kinematics.fk_L0.L0_ddot);
+        //
+        // /* =========================== 低通滤波 =========================== */
+        //
+        // leg->vmc.forward_kinematics.fk_L0.L0_ddot = update_low_pass_filter(&leg->L0_ddot,leg->vmc.forward_kinematics.fk_L0.L0_ddot_raw);
+
 
         /** 8、精确求解phi0_dot **/
         // 求phi0_dot
@@ -180,11 +194,19 @@ extern ChassisPhysicalConfig chassis_physical_config;
         leg->vmc.forward_kinematics.fk_phi.last_d_phi0 = leg->vmc.forward_kinematics.fk_phi.d_phi0;
         leg->vmc.forward_kinematics.fk_phi.d_phi0 = temp_y / temp_x;
 
+        // /* =========================== phi0 phi0'融合 =========================== */
+
+        // PHI0_KF_calc(&PHI0_EstimateKF, &chassis.leg_L, chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0_raw, chassis.leg_L.vmc.forward_kinematics.fk_phi.d_phi0_raw);
+        // PHI0_KF_calc(&PHI0_EstimateKF, leg, leg->vmc.forward_kinematics.fk_phi.phi0_raw, leg->vmc.forward_kinematics.fk_phi.d_phi0_raw);
+
         /**  9、phi0_ddot 差分求解 **/
         leg->vmc.forward_kinematics.fk_phi.dd_phi0 =
                 (leg->vmc.forward_kinematics.fk_phi.d_phi0 - leg->vmc.forward_kinematics.fk_phi.last_d_phi0)
                 / (CHASSIS_PERIOD * 0.001f);
 
+        // /* =========================== 低通滤波 =========================== */
+
+        // leg->vmc.forward_kinematics.fk_phi.dd_phi0 = update_low_pass_filter(&leg->phi0_ddot,leg->vmc.forward_kinematics.fk_phi.dd_phi0_raw);
     }
 
 /* =========================== 腿部协调处理 =========================== */
@@ -246,11 +268,33 @@ extern ChassisPhysicalConfig chassis_physical_config;
                     * sinf(vmc->forward_kinematics.fk_phi.phi3 - vmc->forward_kinematics.fk_phi.phi4)
                     / sinf(vmc->forward_kinematics.fk_phi.phi3 - vmc->forward_kinematics.fk_phi.phi2);
 
+
         /* =========================== T1,T4 =========================== */
 
             Matrix_multiply(2, 2, vmc->forward_kinematics.J_F_to_T.array,
                             2, 1, vmc->forward_kinematics.Fxy_set_point.array,
                             vmc->forward_kinematics.T1_T4_set_point.array);
+
+        // USART_Vofa_Justfloat_Transmit(
+        //         chassis.leg_L.vmc.forward_kinematics.J_F_to_T.E.x1_1,chassis.leg_L.vmc.forward_kinematics.J_F_to_T.E.x1_2
+        //      ,chassis.leg_L.vmc.forward_kinematics.J_F_to_T.E.x2_1,chassis.leg_L.vmc.forward_kinematics.J_F_to_T.E.x2_2
+        //
+        //      ,chassis.leg_R.vmc.forward_kinematics.J_F_to_T.E.x1_1,chassis.leg_R.vmc.forward_kinematics.J_F_to_T.E.x1_2
+        //      ,chassis.leg_R.vmc.forward_kinematics.J_F_to_T.E.x2_1,chassis.leg_R.vmc.forward_kinematics.J_F_to_T.E.x2_2
+        //
+        //     ,chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.array[0][0],chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.array[0][1]
+        //     ,chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point,chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point
+        //
+        //     ,chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.array[0][0],chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.array[0][1]
+        //     ,chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point,chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point
+        //
+        //     ,0,0,0,0
+        //     ,0,0,0,0
+        //     ,0,0,0,0
+        //     ,0,0,0,0
+        //     ,0,0,0,0
+        //     ,0,0,0);
+
     }
 
 // 逆解算腿长变化速度、摆角变化速度θ'

@@ -37,6 +37,8 @@ typedef struct
 
     float Gyro[3];
     float Accel[3];
+    float MotionAccel_b[3]; // 新增：机体坐标运动加速度
+    float MotionAccel_n[3]; // 新增：绝对系运动加速度
 
     float OrientationCosine[3];
 
@@ -64,6 +66,11 @@ typedef struct
     int16_t YawRoundCount;
 
     float YawAngleLast;
+
+    // 加速度在绝对系的向量表示（用于外部调用）
+    float xn[3];
+    float yn[3];
+    float zn[3];
 } QEKF_INS_t;
 
 extern QEKF_INS_t QEKF_INS;
