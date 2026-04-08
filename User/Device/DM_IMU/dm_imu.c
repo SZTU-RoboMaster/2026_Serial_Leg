@@ -21,7 +21,8 @@ void DM_IMU_Init(void)
 
 void IMU_Position_Compensation(float *accel_raw, float *gyro, float *gyro_dot)
 {
-    float r[3] = {
+    float r[3] =
+    {
         chassis_physical_config.imu_pos_x,
         chassis_physical_config.imu_pos_y,
         chassis_physical_config.imu_pos_z

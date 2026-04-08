@@ -172,7 +172,7 @@
                 #define CHASSIS_TURN_SPEED_PID_I 0.0f
                 #define CHASSIS_TURN_SPEED_PID_D 10.0f
                 #define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
-                #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 5.0f
+                #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 2.0f
 
     /* =========================== 关节 ============================= */
 
@@ -194,19 +194,19 @@
 
             /* =========================== 腿长位置环PID ============================= */
 
-                #define CHASSIS_LEG_L0_POS_PID_P 15.0f
+                #define CHASSIS_LEG_L0_POS_PID_P 55.0f
                 #define CHASSIS_LEG_L0_POS_PID_I 0.0f
-                #define CHASSIS_LEG_L0_POS_PID_D 15.0f
+                #define CHASSIS_LEG_L0_POS_PID_D 1.0f
                 #define CHASSIS_LEG_L0_POS_PID_IOUT_LIMIT 0.0f
-                #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 20.0f
+                #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 50.0f
 
             /* =========================== 腿长速度环PID ============================= */
 
-                #define CHASSIS_LEG_L0_SPEED_PID_P 25.0f
+                #define CHASSIS_LEG_L0_SPEED_PID_P 45.0f
                 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
-                #define CHASSIS_LEG_L0_SPEED_PID_D 5.0f
+                #define CHASSIS_LEG_L0_SPEED_PID_D 1.0f
                 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
-                #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 35.0f
+                #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 40.0f
 
         /* =========================== Roll补偿PID ============================= */
 
@@ -314,7 +314,7 @@
 
             float theta;
             float theta_dot;
-
+            float alpha;
             float theta_dot_last;
             float theta_ddot;
 
@@ -679,6 +679,7 @@ typedef struct {
             /* =========================== 倒地自救标志位 完成1 =========================== */
 
                 bool chassis_recover_finish;
+                bool chassis_ready_to_balance;
                 Pos where_to_ready;
 
     } Chassis;

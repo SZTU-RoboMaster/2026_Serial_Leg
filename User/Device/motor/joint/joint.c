@@ -43,6 +43,34 @@ float vel;
         }
     }
 
+
+/* =========================== 使能关节 ============================= */
+
+void joint_disable(void)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            set_left_dm8009p_disable(&joint[LF]);
+            osDelay(1);
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            set_left_dm8009p_disable(&joint[LB]);
+            osDelay(1);
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            set_right_dm8009p_disable(&joint[RF]);
+            osDelay(1);
+        }
+        for (int i = 0; i < 10; i++)
+        {
+            set_right_dm8009p_disable(&joint[RB]);
+            osDelay(1);
+        }
+    }
+
+
 /* =========================== 返回关节电机指针 ============================= */
 
     Dm8009P *get_joint_motors(void)

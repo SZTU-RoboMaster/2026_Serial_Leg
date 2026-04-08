@@ -14,6 +14,7 @@ enum JointMotorIndex
 
 void joint_init(void);
 void joint_enable(void);
+void joint_disable(void);
 Dm8009P* get_joint_motors(void);
 
 extern Dm8009P joint[4];

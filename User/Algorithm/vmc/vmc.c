@@ -36,10 +36,10 @@ extern ChassisPhysicalConfig chassis_physical_config;
 
             /* ========================= 大腿小腿分别向正方向 设对应电机零点 ========================= */
 
-            leg_L->vmc.forward_kinematics.fk_phi.phi1 = LB_joint_pos + PHI1_OFFSET;
-            leg_L->vmc.forward_kinematics.fk_phi.phi4 = LF_joint_pos + PHI4_OFFSET;
-            leg_R->vmc.forward_kinematics.fk_phi.phi1 = -RB_joint_pos + PHI1_OFFSET;
-            leg_R->vmc.forward_kinematics.fk_phi.phi4 = -RF_joint_pos + PHI4_OFFSET;
+            leg_L->vmc.forward_kinematics.fk_phi.phi1 = LB_joint_pos ; //-0.428
+            leg_L->vmc.forward_kinematics.fk_phi.phi4 = LF_joint_pos ; //2.193
+            leg_R->vmc.forward_kinematics.fk_phi.phi1 = -(RB_joint_pos - 0.024f); // 0.428 = 0.452+x x=-0.024
+            leg_R->vmc.forward_kinematics.fk_phi.phi4 = -(RF_joint_pos -0.047f); //-2.193 = -2.146+y y=-0.047
 
         /* ========================= 1.2.1 初始phi1‘ phi4’ ========================= */
 

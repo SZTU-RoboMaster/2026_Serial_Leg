@@ -66,6 +66,42 @@ void set_right_dm8009p_enable(Dm8009P *right_motor) {
 }
 
 
+
+/** 失能左侧电机 **/
+void set_left_dm8009p_disable(Dm8009P *left_motor) {
+
+    LeftJointTxFrame.Header.Identifier = left_motor->id;
+
+    LeftJointTxFrame.Data[0] = 0xFF;
+    LeftJointTxFrame.Data[1] = 0xFF;
+    LeftJointTxFrame.Data[2] = 0xFF;
+    LeftJointTxFrame.Data[3] = 0xFF;
+    LeftJointTxFrame.Data[4] = 0xFF;
+    LeftJointTxFrame.Data[5] = 0xFF;
+    LeftJointTxFrame.Data[6] = 0xFF;
+    LeftJointTxFrame.Data[7] = 0xFD;
+
+    HAL_FDCAN_AddMessageToTxFifoQ(LeftJointTxFrame.hcan, &LeftJointTxFrame.Header, LeftJointTxFrame.Data);
+}
+
+/** 失能右侧电机 **/
+void set_right_dm8009p_disable(Dm8009P *right_motor) {
+
+    RightJointTxFrame.Header.Identifier = right_motor->id;
+
+    RightJointTxFrame.Data[0] = 0xFF;
+    RightJointTxFrame.Data[1] = 0xFF;
+    RightJointTxFrame.Data[2] = 0xFF;
+    RightJointTxFrame.Data[3] = 0xFF;
+    RightJointTxFrame.Data[4] = 0xFF;
+    RightJointTxFrame.Data[5] = 0xFF;
+    RightJointTxFrame.Data[6] = 0xFF;
+    RightJointTxFrame.Data[7] = 0xFD;
+
+    HAL_FDCAN_AddMessageToTxFifoQ(RightJointTxFrame.hcan, &RightJointTxFrame.Header, RightJointTxFrame.Data);
+}
+
+
 /** 左侧电机-位置速度模式模式 **/
 void set_left_dm8009p_pos_speed(Dm8009P *left_motor,
                                 float pos_rad,

@@ -3,7 +3,8 @@
 
 /* =========================== 卡尔曼滤波器结构体 ============================= */
 
-    KalmanFilter_t Theta_EstimateKF;
+    KalmanFilter_t Theta_EstimateKF_LegL;
+    KalmanFilter_t Theta_EstimateKF_LegR;
 
 /* =========================== 初始化P ============================= */
 
@@ -14,7 +15,7 @@
 
     /* iss：要调 */
 
-    float Theta_EstimateKF_F[4] = { 1.0f , CHASSIS_PERIOD * 0.001f ,
+    float Theta_EstimateKF_F[4] = { 1.0f , 0.001f ,
                                     0.0f ,                    1.0f };
     float Theta_EstimateKF_Q[4] = { THETA_PROCESS_NOISE ,              0.0f ,
                                                  0.0f , THETA_DOT_PROCESS_NOISE };

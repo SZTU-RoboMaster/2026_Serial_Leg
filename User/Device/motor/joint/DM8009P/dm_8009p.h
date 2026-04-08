@@ -43,6 +43,11 @@ void set_left_dm8009p_enable(Dm8009P *left_motor);
 
 void set_right_dm8009p_enable(Dm8009P *right_motor);
 
+/** 失能电机 **/
+void set_left_dm8009p_disable(Dm8009P *left_motor);
+
+void set_right_dm8009p_disable(Dm8009P *right_motor);
+
 
 /** 位置速度模式模式 **/
 void set_left_dm8009p_pos_speed(Dm8009P *left_motor,
