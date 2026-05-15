@@ -33,6 +33,6 @@ Chassis chassis;
                         // 坐标系：向前 X+, 向左 Y+, 向上 Z+
 
                         .imu_pos_x = - 0.12058f,//前正
-                        .imu_pos_y = 69.06f,    //左正
-                        .imu_pos_z = 17.16f,    //上正
+                        .imu_pos_y = -0.06906f,    //左正
+                        .imu_pos_z = -0.01716f,    //上正
         };

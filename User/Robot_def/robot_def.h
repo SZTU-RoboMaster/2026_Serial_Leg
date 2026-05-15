@@ -575,9 +575,9 @@ typedef struct {
 
         /* =========================== 倒地自救标志位 完成1 =========================== */
 
-            bool leg_recover_finish;
             bool leg_is_shortest;
-            bool ready_to_balance;
+            bool leg_ready_to_selfhelp;
+            bool leg_selfhelp_finish;
 
     } Leg;
 
@@ -678,7 +678,7 @@ typedef struct {
 
             /* =========================== 倒地自救标志位 完成1 =========================== */
 
-                bool chassis_recover_finish;
+                bool chassis_selfhelp_finish;
                 bool chassis_ready_to_balance;
                 Pos where_to_ready;
 
