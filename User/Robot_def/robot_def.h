@@ -114,19 +114,9 @@
         #define THETA_OFFSET_R_CON THETA_OFFSET_R + THETA_OFFSET_CON
         #define THETA_OFFSET_CON1 THETA_OFFSET_CON+THETA_OFFSET
 
-
-
-//phi 平衡时 -0.721 -0.760
-
 /* =========================== 小陀螺旋转速度 ============================= */
 
     #define SPIN_SPEED 5.0f
-
-/* =========================== 腿摆角 用于倒地自救 ============================= */
-
-    /* iss：要调 */
-
-    #define LEG_NORMAL_RAD 30.0f * DEGREE_TO_RAD
 
 /* =========================== 约束 ============================= */
 
@@ -156,9 +146,9 @@
 
     /* =========================== 轮毂 ============================= */
 
-        /* =========================== 转向PID ============================= */
+        /* =========================== 转向-PID ============================= */
 
-            /* =========================== 转向位置环PID ============================= */
+            /* =========================== 转向-位置环-PID ============================= */
 
                 #define CHASSIS_TURN_POS_PID_P 2.0f
                 #define CHASSIS_TURN_POS_PID_I 0.0f
@@ -166,7 +156,7 @@
                 #define CHASSIS_TURN_POS_PID_IOUT_LIMIT 0.0f
                 #define CHASSIS_TURN_POS_PID_OUT_LIMIT 2.0f
 
-            /* =========================== 转向速度环PID ============================= */
+            /* =========================== 转向-速度环-PID ============================= */
 
                 #define CHASSIS_TURN_SPEED_PID_P 5.0f
                 #define CHASSIS_TURN_SPEED_PID_I 0.0f
@@ -176,13 +166,7 @@
 
     /* =========================== 关节 ============================= */
 
-        /* =========================== 防劈叉PID ============================= */
-
-        // #define CHASSIS_LEG_COORDINATION_PID_P 50.0f // 1
-        // #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
-        // #define CHASSIS_LEG_COORDINATION_PID_D 15.0f
-        // #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
-        // #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 2.0f
+        /* =========================== 防劈叉-PID ============================= */
 
         #define CHASSIS_LEG_COORDINATION_PID_P 10.0f // 20.0f 30.0f
         #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
@@ -190,9 +174,9 @@
         #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
         #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 5.0f
 
-        /* =========================== 腿长pid============================= */
+        /* =========================== 腿长-PID ============================= */
 
-            /* =========================== 腿长位置环PID ============================= */
+            /* =========================== 腿长-位置环-PID ============================= */
 
                 #define CHASSIS_LEG_L0_POS_PID_P 55.0f
                 #define CHASSIS_LEG_L0_POS_PID_I 0.0f
@@ -200,7 +184,7 @@
                 #define CHASSIS_LEG_L0_POS_PID_IOUT_LIMIT 0.0f
                 #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 50.0f
 
-            /* =========================== 腿长速度环PID ============================= */
+            /* =========================== 腿长-速度环-PID ============================= */
 
                 #define CHASSIS_LEG_L0_SPEED_PID_P 45.0f
                 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
@@ -208,13 +192,21 @@
                 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
                 #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 40.0f
 
-        /* =========================== Roll补偿PID ============================= */
+        /* =========================== Roll补偿-PID ============================= */
 
             #define CHASSIS_ROLL_PID_P 200.0f
             #define CHASSIS_ROLL_PID_I 0.0f
             #define CHASSIS_ROLL_PID_D 0.0f
             #define CHASSIS_ROLL_PID_IOUT_LIMIT 0.0f
             #define CHASSIS_ROLL_PID_OUT_LIMIT 50.0f
+
+        /* =========================== 自救θ-PID ============================= */
+
+            #define CHASSIS_THETA_PID_P 15.0f
+            #define CHASSIS_THETA_PID_I 1.0f
+            #define CHASSIS_THETA_PID_D 15.0f
+            #define CHASSIS_THETA_PID_IOUT_LIMIT 10.0f
+            #define CHASSIS_THETA_PID_OUT_LIMIT 20.0f
 
 /* =========================== 底盘物理参数结构体 ============================= */
 
@@ -546,7 +538,7 @@ typedef struct {
             Pid leg_speed_pid;
             float leg_change_torque;
             float torque_g;
-
+            float target_len;
         /* =========================== 轮毂力矩 =========================== */
 
             float wheel_torque;
@@ -575,10 +567,13 @@ typedef struct {
 
         /* =========================== 倒地自救标志位 完成1 =========================== */
 
-            bool leg_is_shortest;
-            bool leg_ready_to_selfhelp;
-            bool leg_selfhelp_finish;
+            bool leg_shortest_is_ready;
+            bool leg_pos_is_ready;
+            bool leg_selfhelp_ready;
 
+            Pid leg_theta_reset_pid;
+            float target_theta;
+            float ramp_target_theta;
     } Leg;
 
 /* =========================== 底盘结构体 ============================= */

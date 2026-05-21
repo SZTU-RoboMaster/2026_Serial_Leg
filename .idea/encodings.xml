@@ -12,6 +12,7 @@
     <file url="file://$PROJECT_DIR$/User/Algorithm/filter/kalman_filter/theta_kalman_filter/theta_kalman_filter.c" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/filter/low_pass_filter/low_pass_filter.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/lqr/lqr.c" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/User/Algorithm/user_lib/user_lib.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/user_lib/user_lib.h" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/Algorithm/vmc/vmc.c" charset="GBK" />
     <file url="file://$PROJECT_DIR$/User/App/Chassis_Task/chassis_task.c" charset="GBK" />

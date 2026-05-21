@@ -114,9 +114,9 @@
 
         /* =========================== 轮毂 ============================= */
 
-            /* =========================== 转向PID ============================= */
+            /* =========================== 转向-PID ============================= */
 
-                /* =========================== 转向位置环PID ============================= */
+                /* =========================== 转向-位置环-PID ============================= */
 
                     pid_init(&chassis.chassis_turn_pos_pid,
                              CHASSIS_TURN_POS_PID_OUT_LIMIT,
@@ -125,7 +125,7 @@
                              CHASSIS_TURN_POS_PID_I,
                              CHASSIS_TURN_POS_PID_D);
 
-                /* =========================== 转向速度环PID ============================= */
+                /* =========================== 转向-速度环-PID ============================= */
 
                     pid_init(&chassis.chassis_turn_speed_pid,
                              CHASSIS_TURN_SPEED_PID_OUT_LIMIT,
@@ -136,7 +136,7 @@
 
         /* =========================== 关节 ============================= */
 
-            /* =========================== 防劈叉PID ============================= */
+            /* =========================== 防劈叉-PID ============================= */
 
                 pid_init(&chassis.chassis_leg_coordination_pid,
                          CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT,
@@ -145,11 +145,11 @@
                          CHASSIS_LEG_COORDINATION_PID_I,
                          CHASSIS_LEG_COORDINATION_PID_D);
 
-            /* =========================== 腿长PID ============================= */
+            /* =========================== 腿长-PID ============================= */
 
                 /* iss：后面最好分段算 */
 
-                /* =========================== 腿长位置环PID ============================= */
+                /* =========================== 腿长-位置环-PID ============================= */
 
                     pid_init(&chassis.leg_L.leg_pos_pid,
                              CHASSIS_LEG_L0_POS_PID_OUT_LIMIT,
@@ -165,7 +165,7 @@
                              CHASSIS_LEG_L0_POS_PID_I,
                              CHASSIS_LEG_L0_POS_PID_D);
 
-                /* =========================== 腿长速度环PID ============================= */
+                /* =========================== 腿长-速度环-PID ============================= */
 
                     pid_init(&chassis.leg_L.leg_speed_pid,
                              CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT,
@@ -181,7 +181,7 @@
                              CHASSIS_LEG_L0_SPEED_PID_I,
                              CHASSIS_LEG_L0_SPEED_PID_D);
 
-            /* =========================== Roll补偿PID ============================= */
+            /* =========================== Roll补偿-PID ============================= */
 
                 pid_init(&chassis.chassis_roll_pid,
                          CHASSIS_ROLL_PID_OUT_LIMIT,
@@ -190,13 +190,29 @@
                          CHASSIS_ROLL_PID_I,
                          CHASSIS_ROLL_PID_D);
 
+        /* =========================== 自救θ-PID =========================== */
+
+            pid_init(&chassis.leg_L.leg_theta_reset_pid,
+                    CHASSIS_THETA_PID_OUT_LIMIT,
+                    CHASSIS_THETA_PID_IOUT_LIMIT,
+                             CHASSIS_THETA_PID_P,
+                             CHASSIS_THETA_PID_I,
+                             CHASSIS_THETA_PID_D);
+
+            pid_init(&chassis.leg_R.leg_theta_reset_pid,
+                    CHASSIS_THETA_PID_OUT_LIMIT,
+                    CHASSIS_THETA_PID_IOUT_LIMIT,
+                             CHASSIS_THETA_PID_P,
+                             CHASSIS_THETA_PID_I,
+                             CHASSIS_THETA_PID_D);
+
     }
 
 /*******************************************************************************
  *                                 遥控                                      *
  *******************************************************************************/
 
-/* iss：后面要移到remote.c 通过板间通信接收 */
+/* iss：后面移到remote.c 通过板间通信接收 */
 
 /* =========================== 底盘根据遥控器设置模式 =========================== */
 
@@ -244,25 +260,43 @@
 
         /* =========================== 期望速度 =========================== */
 
-            chassis.chassis_ctrl_info.v_m_per_s = - (float) (remote_ctrl.rc.ch[CHASSIS_VX_CHANNEL]) * RC_TO_VX;
+            float vel_temp= - (float) (remote_ctrl.rc.ch[CHASSIS_VX_CHANNEL]) * RC_TO_VX;
+
+            /* 防猛冲 */
+
+                slope_following(&vel_temp,&chassis.chassis_ctrl_info.v_m_per_s,0.02f);
 
             /* iss：测试 */
-            // chassis.chassis_ctrl_info.v_m_per_s = 0;
+
+                // chassis.chassis_ctrl_info.v_m_per_s = 0;
 
         /* =========================== 转向 期望yaw 在上次下电的yaw的基础上 =========================== */
-
-            /* iss：变太快了 */
 
             chassis.chassis_ctrl_info.yaw_rad += (float) (remote_ctrl.rc.ch[CHASSIS_YAW_CHANNEL]) * RC_TO_YAW_INCREMENT / (2 * PI);
 
         /* =========================== 期望腿长 =========================== */
 
-            /* iss：后续也通过遥控值映射 */
+            // /* iss：待测试 */
+            //
+            //     if(remote_ctrl.rc.ch[CHASSIS_LEG_CHANNEL] == -660)
+            //     {
+            //         chassis.chassis_ctrl_info.target_length = 0.12f;
+            //     }
+            //     else if(remote_ctrl.rc.ch[CHASSIS_LEG_CHANNEL] == 660)
+            //     {
+            //         chassis.chassis_ctrl_info.target_length = 0.32f;
+            //     }
+            //     else
+            //     {
+            //         chassis.chassis_ctrl_info.target_length = 0.18f;
+            //     }
 
-            chassis.chassis_ctrl_info.target_length = 0.197f;
+            /* iss：测试 */
+
+                chassis.chassis_ctrl_info.target_length = 0.185f;
 
             /* iss：后续可以根据pitch自适应 */
-            // VAL_LIMIT(chassis.chassis_ctrl_info.target_length,MIN_L0,MAX_L0);
+
 
     }
 
@@ -286,7 +320,7 @@
 
 /* =========================== 获取底盘传感器数据 =========================== */
 
-/* iss：后续可以用EKF */
+    /* iss：后续可以用EKF */
 
     static void get_IMU_info(void)
     {
@@ -408,15 +442,10 @@
 
                         /* =========================== 1.1 机体角速度 （b系相对于e系） =========================== */
 
-                            /* iss down：原来是pitch_gyro */
-
                             chassis.leg_L.w_eb = chassis.leg_L.state_variable_feedback.phi_dot;
                             chassis.leg_R.w_eb = chassis.leg_R.state_variable_feedback.phi_dot;
 
                         /* =========================== 1.2 轮毂（c系）相对大地（e系）的角速度 =========================== */
-
-                            // float w_l = w_ecd_l + phi_bc_dot_l + w_eb_l;
-                            // float w_r = w_ecd_r + phi_bc_dot_r + w_eb_r;
 
                             chassis.leg_L.w = chassis.leg_L.w_ecd - chassis.leg_L.phi_bc_dot - chassis.leg_L.w_eb;
                             chassis.leg_R.w = chassis.leg_R.w_ecd - chassis.leg_R.phi_bc_dot - chassis.leg_R.w_eb;
@@ -451,9 +480,10 @@
 
                 /* =========================== 2.4 x' x''融合 估计x' =========================== */
 
-                    // /* iss：先不融合 */
                     chassis.leg_L.state_variable_feedback.x_dot = chassis.leg_L.state_variable_feedback.x_dot_raw;
                     chassis.leg_R.state_variable_feedback.x_dot = chassis.leg_R.state_variable_feedback.x_dot_raw;
+
+                    /* iss：先不融合 */
 
                         // Speed_KF_calc(&Speed_EstimateKF, &chassis.leg_L, chassis.leg_L.state_variable_feedback.x_dot_raw, chassis.imu_reference.robot_ax);
                         // Speed_KF_calc(&Speed_EstimateKF, &chassis.leg_R, chassis.leg_R.state_variable_feedback.x_dot_raw, chassis.imu_reference.robot_ax);
@@ -525,16 +555,16 @@
 
         /* =========================== 2.4 θ θ' 融合 估计 θ θ' =========================== */
 
-                /* iss：先不融合 */
-
                 chassis.leg_L.state_variable_feedback.theta = L_theta_raw;
                 chassis.leg_L.state_variable_feedback.theta_dot = L_theta_dot_raw;
 
                 chassis.leg_R.state_variable_feedback.theta = R_theta_raw;
                 chassis.leg_R.state_variable_feedback.theta_dot = R_theta_dot_raw;
 
-                // theta_KF_calc(&Theta_EstimateKF_LegL,&chassis.leg_L, L_theta_raw, L_theta_dot_raw);
-                // theta_KF_calc(&Theta_EstimateKF_LegR,&chassis.leg_R, R_theta_raw, R_theta_dot_raw);
+                /* iss：先不融合 */
+
+                    // theta_KF_calc(&Theta_EstimateKF_LegL,&chassis.leg_L, L_theta_raw, L_theta_dot_raw);
+                    // theta_KF_calc(&Theta_EstimateKF_LegR,&chassis.leg_R, R_theta_raw, R_theta_dot_raw);
 
             /* =========================== θ'' =========================== */
 
@@ -595,7 +625,7 @@
             chassis.leg_L.wheel_torque_lqr =
                 - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
                 - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
-                 - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+                - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
                 - wheel_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
                 - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
                 - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f)
@@ -629,9 +659,10 @@
             chassis.wheel_turn_torque = pid_calc(&chassis.chassis_turn_speed_pid,
                                                   chassis.imu_reference.yaw_gyro,
                                                   target_yaw_speed);
+        /* iss：待测试 */
 
-            chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
-            chassis.leg_R.wheel_torque -= chassis.wheel_turn_torque;
+            // chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
+            // chassis.leg_R.wheel_torque -= chassis.wheel_turn_torque;
 
         /* iss：测试 */
 
@@ -695,8 +726,8 @@
 
                 VAL_LIMIT(chassis.roll_compensatory_torque, - CHASSIS_ROLL_PID_OUT_LIMIT, CHASSIS_ROLL_PID_OUT_LIMIT);
 
-                chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point += chassis.roll_compensatory_torque;
-                chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point -= chassis.roll_compensatory_torque;
+                // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point += chassis.roll_compensatory_torque;
+                // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point -= chassis.roll_compensatory_torque;
 
             /* iss：测试 */
 
@@ -708,33 +739,35 @@
             chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
             chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
 
-            /* ============================= 3.1 不同腿长下进行多项式拟合 ============================= */
+            /* ============================= 摆角力矩 ============================= */
 
-                chassis_K_matrix_fitting(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0, joint_K_L, joint_fitting_factor);
-                chassis_K_matrix_fitting(chassis.leg_R.vmc.forward_kinematics.fk_L0.L0, joint_K_R, joint_fitting_factor);
+                /* ============================= 3.1 不同腿长下进行多项式拟合 ============================= */
 
-            /* ============================= 3.2 加入目标输入 ============================= */
+                    chassis_K_matrix_fitting(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0, joint_K_L, joint_fitting_factor);
+                    chassis_K_matrix_fitting(chassis.leg_R.vmc.forward_kinematics.fk_L0.L0, joint_K_R, joint_fitting_factor);
 
-                chassis.leg_L.Tp_lqr =
-                    - joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
-                     - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
-                    - joint_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
-                    - joint_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-                    - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-                    - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f)
-                    ;
+                /* ============================= 3.2 加入目标输入 ============================= */
 
-                chassis.leg_R.Tp_lqr =
-                    - joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
-                    - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
-                    - joint_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
-                    - joint_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
-                    - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-                    - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f)
-                    ;
+                    chassis.leg_L.Tp_lqr =
+                        - joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f)
+                        - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+                        - joint_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f)
+                        - joint_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+                        - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+                        - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f)
+                        ;
 
-        chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.leg_L.Tp_lqr;
-        chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.leg_R.Tp_lqr;
+                    chassis.leg_R.Tp_lqr =
+                        - joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f)
+                        - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                        - joint_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f)
+                        - joint_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s)
+                        - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+                        - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f)
+                        ;
+
+            chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.leg_L.Tp_lqr;
+            chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.leg_R.Tp_lqr;
 
             /* ============================= 防劈叉pid ============================= */
 
@@ -744,48 +777,15 @@
 
                 VAL_LIMIT(chassis.steer_compensatory_torque, -CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT, CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT);
 
-                chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
-                chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
+                // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
+                // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
 
             /* iss：测试 */
 
                 // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
                 // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
-
-            /* ============================= 如果没恢复 控制pitch ============================= */
-
-                /* iss：调好参再加 */
-
-                if (chassis.chassis_ready_to_balance == false)
-                {
-                    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
-                    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
-
-                    // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
-                    //     + joint_K_L[4] * (-chassis.leg_L.state_variable_feedback.phi - 0.0f)
-                    //     + joint_K_L[5] * (-chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
-                    // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
-                    //     - joint_K_R[4] * (-chassis.leg_R.state_variable_feedback.phi - 0.0f)
-                    //     - joint_K_R[5] * (-chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
-
-                    // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
-                    // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
-
-                    // if (chassis.where_to_ready == balance)
-                    // {
-                    //     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
-                    //     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
-                    //
-                    //     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point += chassis.leg_L.torque_g;
-                    //     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point -= chassis.leg_R.torque_g;
-                    // }
-                }
 
             /* kss：不要在Tp层面修改左右侧旋转方向相反这个问题 因为解算出来加到电机上的力矩是对的 */
-            /* iss：测试 */
-
-                // chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
-                // chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0;
 
         /* =========================== 2. 正动力学变换 =========================== */
 
@@ -811,6 +811,13 @@
 
 /* ============================= 倒地自救 ============================= */
 
+    static float wrap_pi(float angle)
+    {
+        while (angle > PI)  angle -= 2.0f * PI;
+        while (angle < -PI) angle += 2.0f * PI;
+        return angle;
+    }
+
     /* ============================= MIT给正v,8009逆时针旋转 ============================= */
     /* ============================= RF逆时针 大腿顺时针 phi1- RF要求逆时针 ============================= */
     /* ============================= RB逆时针 收小腿 phi4- ============================= */
@@ -819,167 +826,85 @@
 
     /* ============================= 恢复 ============================= */
 
-        static void leg_selfhelp(Leg *leg,Pos pos)
+        static void leg_reset_control(Leg *leg, float side_sign)
             {
-                /* iss：straight先不用 */
+                leg->vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
+                leg->vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0.0f;
+                /* ============================= 收腿 ============================= */
 
-                if (leg->leg_is_shortest == true && leg->leg_ready_to_selfhelp == true)
-                {
-                    leg->leg_selfhelp_finish = true;
-                }
-                else
-                {
-                     /* ============================= 收小腿 ============================= */
+                    // 目标腿长
+                        float target_len_const = 0.18f;
 
-                    float target_l0 = 0;
+                    // 腿长逐步收缩到最短
+                        slope_following(&target_len_const, &leg->target_len, 0.0010f);
 
-                    switch (pos)
-                    {
-                        // case(straight):
-                        //     target_l0 = 0.22f;
-                        //     break;
-                        // case(balance):
-                        //     target_l0 = MIN_L0;
-                        //     break;
-                        case(horizon):
-                            target_l0 = 0.182f;
-                            break;
-                        default:
-                            break;
-                    }
+                    // 腿长 PID：位置环 → 速度环
+                        float L0_dot_set = pid_calc(&leg->leg_pos_pid,
+                                                     leg->vmc.forward_kinematics.fk_L0.L0,
+                                                     leg->target_len);
 
-                    if (ABS(leg->vmc.forward_kinematics.fk_L0.L0 - target_l0) < 0.01)
-                    {
-                        leg->B_speed = 0;
-                        leg->F_speed = 0;
-                        leg->kd = 0;
-                        leg->leg_is_shortest = true;
-                    }
-                    else
-                    {
-                        leg->F_speed = -5;
-                        leg->B_speed = 5;
-                        leg->kd = 2;
-                        if (leg == &chassis.leg_L)
-                        {
-                            leg->F_speed *= -1;
-                            leg->B_speed *= -1;
-                        }
-                        leg->leg_is_shortest = false;
-                    }
+                        float leg_len_torque = pid_calc(&leg->leg_speed_pid,
+                                                         leg->vmc.forward_kinematics.fk_L0.L0_dot,
+                                                         L0_dot_set);
 
-                /* ============================= 向车身后侧转动 转到自救位置 ============================= */
+                    // 收好腿
+                        leg->leg_shortest_is_ready =
+                        (fabsf(leg->vmc.forward_kinematics.fk_L0.L0 - target_len_const) < 0.010f);
 
-                    float target_phi0 = 0;
-                    float target_phi1 = 0;
-                    float target_phi4 = 0;
+                /* ============================= 转腿 ============================= */
 
-                    switch (pos)
-                    {
-                        // case(straight):
-                        //     target_phi0 = 2.67f;
-                        //     target_phi1 = 1.58f;
-                        //     target_phi4 = -2.56f;
-                        //     break;
-                        // case(balance):
-                        //     target_phi0 = 1.57975f;
-                        //     target_phi1 = - 0.4713f;
-                        //     target_phi4 = 2.15495f;
-                        //     break;
-                        case(horizon):
-                            target_phi0 = 0.96235f;
-                            target_phi1 = - 0.3572f;
-                            target_phi4 = 2.28185f;
-                            break;
-                        default:
-                            break;
-                    }
+                        leg->leg_theta_reset_pid.iout = 0.0f;
 
-                    if (leg->leg_is_shortest == true)
-                    {
-                        if ((leg->vmc.forward_kinematics.fk_phi.phi0 > 0 && ABS(leg->vmc.forward_kinematics.fk_phi.phi0 - target_phi0) < 0.3)
-                            &&(ABS(leg->vmc.forward_kinematics.fk_phi.phi1 - target_phi1) < 0.15 || ABS(leg->vmc.forward_kinematics.fk_phi.phi4 - target_phi4) < 0.15))
-                        {
-                            leg->kd = 0;
-                            leg->B_speed = 0;
-                            leg->F_speed = 0;
-                            leg->leg_ready_to_selfhelp = true;
-                        }
-                        else
-                        {
-                            leg->kd = 2;
-                            switch (pos)
-                            {
-                                case(horizon):
-                                // case(straight):
-                                leg->F_speed = 5;
-                                leg->B_speed = 5;
-                                if (leg == &chassis.leg_L)
-                                {
-                                    leg->F_speed *= -1;
-                                    leg->B_speed *= -1;
-                                }
-                                break;
-                                // case(balance):
-                                //     leg->F_speed = 45;
-                                //     leg->B_speed = 45;
-                                //     if (leg == &chassis.leg_R)
-                                //     {
-                                //         leg->F_speed *= -1;
-                                //         leg->B_speed *= -1;
-                                //     }
-                                //     break;
-                                default:
-                                    break;
-                            }
-                            leg->leg_ready_to_selfhelp = false;
-                        }
-                    }
-                }
+                        // 目标角
+                            leg->target_theta = 0.0f;
+
+                        // 摆角逐步过渡到目标角
+                            slope_following(&leg->target_theta, &leg->ramp_target_theta, (0.25f * 2.0f * PI * 0.001f));
+
+                        // theta PID
+                            float theta_torque = pid_calc(&leg->leg_theta_reset_pid,
+                                                       leg->state_variable_feedback.theta,
+                                                       leg->ramp_target_theta);
+
+                        // 转好角
+                            float theta_err = wrap_pi(leg->state_variable_feedback.theta - leg->target_theta);
+                            leg->leg_pos_is_ready =
+                            (fabsf(theta_err) < (5.0f * DEGREE_TO_RAD));
+
+                /* ============================= VMC 正动力学转换 ============================= */
+
+                    leg->vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = side_sign * leg_len_torque;
+                    leg->vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = side_sign * theta_torque;
+
+                    vmc_forward_dynamics(&leg->vmc, &chassis_physical_config);
+
+                    leg->joint_F_torque = leg->vmc.forward_kinematics.T1_T4_set_point.E.T4_set_point;
+                    leg->joint_B_torque = leg->vmc.forward_kinematics.T1_T4_set_point.E.T1_set_point;
+
+            /* ============================= 单腿自救好 ============================= */
+
+                leg->leg_selfhelp_ready =
+                    (leg->leg_shortest_is_ready == true) && (leg->leg_pos_is_ready == true);
+
             }
-    /* ============================= 预平衡 ============================= */
-
-        static void chassis_ready_to_balance(void)
-        {
-            if (ABS(chassis.leg_L.state_variable_feedback.phi-0.0f)<0.1f
-                && ABS(chassis.leg_L.state_variable_feedback.theta-0.0f)<0.15f && ABS(chassis.leg_R.state_variable_feedback.theta-0.0f)<0.15f)
-            {
-                chassis.chassis_ready_to_balance = true;
-                chassis.leg_L.wheel_torque = 0;
-                chassis.leg_R.wheel_torque = 0;
-            }
-            else
-            {
-                /* iss：测试 */
-                    // chassis.leg_L.wheel_torque = 0;
-                    // chassis.leg_R.wheel_torque = 0;
-                chassis.leg_L.wheel_torque = 3;
-                chassis.leg_R.wheel_torque = -3;
-                chassis.chassis_ready_to_balance = false;
-            }
-        }
 
     /* ============================= 倒地自救 ============================= */
 
-        static void ready_to_balance(Pos pos)
+        static void ready_to_balance(void)
         {
-            chassis.leg_L.joint_B_torque = 0.0f;
-            chassis.leg_L.joint_F_torque = 0.0f;
-            chassis.leg_R.joint_B_torque = 0.0f;
-            chassis.leg_R.joint_F_torque = 0.0f;
-
-            if (chassis.leg_L.leg_selfhelp_finish == false || chassis.leg_R.leg_selfhelp_finish == false)
+            if (chassis.leg_L.leg_selfhelp_ready == false || chassis.leg_R.leg_selfhelp_ready == false)
             {
-                chassis.leg_L.wheel_torque = 0;
-                chassis.leg_R.wheel_torque = 0;
+                chassis.leg_L.wheel_torque = 0.0f;
+                chassis.leg_R.wheel_torque = 0.0f;
 
-                leg_selfhelp(&chassis.leg_L,pos);
-                leg_selfhelp(&chassis.leg_R,pos);
+                leg_reset_control(&chassis.leg_L, +1.0f);
+                leg_reset_control(&chassis.leg_R, -1.0f);
+
+                chassis.chassis_selfhelp_finish = false;
             }
             else
             {
                 chassis.chassis_selfhelp_finish = true;
-                chassis_ready_to_balance();
             }
         }
 
@@ -1014,13 +939,13 @@
 
             /* =========================== 倒地自救标志位置0 ============================= */
 
-                chassis.leg_L.leg_is_shortest = false;
-                chassis.leg_L.leg_ready_to_selfhelp = false;
-                chassis.leg_L.leg_selfhelp_finish = false;
+                chassis.leg_L.leg_shortest_is_ready = false;
+                chassis.leg_L.leg_pos_is_ready = false;
+                chassis.leg_L.leg_selfhelp_ready = false;
 
-                chassis.leg_R.leg_is_shortest = false;
-                chassis.leg_R.leg_ready_to_selfhelp = false;
-                chassis.leg_R.leg_selfhelp_finish = false;
+                chassis.leg_R.leg_shortest_is_ready = false;
+                chassis.leg_R.leg_pos_is_ready = false;
+                chassis.leg_R.leg_selfhelp_ready = false;
 
                 chassis.chassis_selfhelp_finish = false;
 
@@ -1065,8 +990,6 @@
 
             chassis.init_flag = true;
 
-        // chassis_selfhelp(horizon);
-
     }
 
 /* ============================= 底盘使能任务 ============================= */
@@ -1080,16 +1003,14 @@
 
         /* ============================= 4. 计算力矩 关节 ============================= */
 
-            joint_enable();
+            // joint_enable();
             joint_calc();
 
         /* ============================= 倒地自救 ============================= */
 
             if (chassis.chassis_ready_to_balance == false)
             {
-                chassis.where_to_ready = horizon;
-                // chassis.where_to_ready = balance;
-                ready_to_balance(chassis.where_to_ready);
+                ready_to_balance();
             }
     }
 
@@ -1105,20 +1026,6 @@
 
         /* =========================== 关节8009P电机 =========================== */
 
-            if (chassis.chassis_selfhelp_finish == true && chassis.chassis_ready_to_balance == false)
-            {
-                /* =========================== 左关节8009P电机 MIT模式 =========================== */
-
-                set_left_dm8009p_MIT(&joint[LF], 3.057f, 0, 20, 1, joint_LF_torque);
-                set_left_dm8009p_MIT(&joint[LB], 0.473f,0, 20 , 1, joint_LB_torque);
-
-                /* =========================== 右关节8009P电机 MIT模式 =========================== */
-
-                set_right_dm8009p_MIT(&joint[RF], -3.057f, 0, 20, 1, joint_RF_torque);
-                set_right_dm8009p_MIT(&joint[RB], -0.437f, 0, 20, 1, joint_RB_torque);
-            }
-            else
-            {
                 /* =========================== 左关节8009P电机 MIT模式 =========================== */
 
                 set_left_dm8009p_MIT(&joint[LF], 0.0f, LF_speed, 0.0f, L_Kd, joint_LF_torque);
@@ -1128,8 +1035,6 @@
 
                 set_right_dm8009p_MIT(&joint[RF], 0.0f, RF_speed, 0.0f, R_Kd, joint_RF_torque);
                 set_right_dm8009p_MIT(&joint[RB], 0.0f, RB_speed, 0.0f, R_Kd, joint_RB_torque);
-
-            }
 
         /* =========================== 轮毂3508电机 =========================== */
 
@@ -1245,7 +1150,6 @@
 
                 case CHASSIS_DISABLE:
                 {
-                    // chassis_selfhelp(horizon);
                     chassis_disable_task();
                     break;
                 }
@@ -1255,7 +1159,6 @@
                 case CHASSIS_INIT:
                 {
                     chassis_init_task();
-                    // chassis_selfhelp(horizon);
                     break;
                 }
 
@@ -1308,20 +1211,66 @@
 
         /* iss：测试 */
 
-            // USART_Vofa_Justfloat_Transmit(
-            // chassis.leg_L.state_variable_feedback.theta
-            //     ,chassis.leg_L.state_variable_feedback.x,chassis.leg_L.state_variable_feedback.x_dot
-            //     ,chassis.leg_L.state_variable_feedback.phi
-            //
-            //     ,chassis.leg_R.state_variable_feedback.theta
-            //     ,chassis.leg_R.state_variable_feedback.x,chassis.leg_R.state_variable_feedback.x_dot
-            //     ,chassis.leg_R.state_variable_feedback.phi
-            //
-            //     ,chassis.imu_reference.yaw_rad
-            //     ,chassis.imu_reference.yaw_total_rad
-            //     ,chassis.imu_reference.pitch_rad
-            //     ,chassis.imu_reference.roll_rad
-            //     ,chassis.chassis_ctrl_info.yaw_rad
+            USART_Vofa_Justfloat_Transmit(
+            chassis.imu_reference.robot_ax,
+            chassis.leg_L.state_variable_feedback.x_dot_raw,
+            chassis.leg_L.w_ecd,
+            chassis.leg_L.phi_bc_dot,
+            chassis.leg_L.w_eb,
+            chassis.leg_L.v_b,
+            chassis.leg_L.state_variable_feedback.theta,
+            chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot,0
+            );
+
+            // chassis.leg_L.state_variable_feedback.theta,chassis.leg_L.state_variable_feedback.theta_dot
+    //             ,chassis.leg_L.state_variable_feedback.x,chassis.leg_L.state_variable_feedback.x_dot
+    //         ,chassis.leg_L.state_variable_feedback.phi,chassis.leg_L.state_variable_feedback.phi_dot
+    //
+    //         ,chassis.leg_R.state_variable_feedback.theta,chassis.leg_R.state_variable_feedback.theta_dot
+    //             ,chassis.leg_R.state_variable_feedback.x,chassis.leg_R.state_variable_feedback.x_dot
+    //         ,chassis.leg_R.state_variable_feedback.phi,chassis.leg_R.state_variable_feedback.phi_dot,
+    //
+    //     joint_K_L[0] ,joint_K_L[1] ,joint_K_L[2] ,joint_K_L[3] ,joint_K_L[4] ,joint_K_L[5] ,
+    //
+    // - joint_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f),
+    // - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f),
+    // - joint_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f),
+    // - joint_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s),
+    // - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f),
+    // - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f),
+    //
+    // joint_K_R[0] ,joint_K_R[1] ,joint_K_R[2] ,joint_K_R[3] ,joint_K_R[4] ,joint_K_R[5] ,
+    // - joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f),
+    // - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f),
+    // - joint_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f),
+    // - joint_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s),
+    // - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f),
+    // - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f),
+    //
+    // wheel_K_L[0],wheel_K_L[1],wheel_K_L[2],wheel_K_L[3],wheel_K_L[4],wheel_K_L[5],
+    //
+    //            - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - 0.0f),
+    //            - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f),
+    //            - wheel_K_L[2] * (chassis.leg_L.state_variable_feedback.x - 0.0f),
+    //            - wheel_K_L[3] * (chassis.leg_L.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s),
+    //            - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f),
+    //            - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f),
+    //
+    //            wheel_K_R[0],wheel_K_R[1],wheel_K_R[2],wheel_K_R[3],wheel_K_R[4],wheel_K_R[5],
+    //
+    //            - wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - 0.0f),
+    //            - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f),
+    //            - wheel_K_R[2] * (chassis.leg_R.state_variable_feedback.x - 0.0f),
+    //            - wheel_K_R[3] * (chassis.leg_R.state_variable_feedback.x_dot - chassis.chassis_ctrl_info.v_m_per_s),
+    //            - wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f),
+    //            - wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f)
+
+            // //
+            // ,chassis.imu_reference.yaw_rad
+            // ,chassis.imu_reference.yaw_total_rad
+            // ,chassis.imu_reference.pitch_rad
+            // ,chassis.imu_reference.roll_rad
+            // ,chassis.chassis_ctrl_info.yaw_rad
             // ,chassis.wheel_turn_torque
             //
             //     ,chassis.leg_L.vmc.forward_kinematics.fk_L0.L0,chassis.leg_R.vmc.forward_kinematics.fk_L0.L0,
@@ -1386,9 +1335,10 @@
             //
             //     ,chassis.leg_R.w_ecd,chassis.leg_R.phi_bc_dot
             //
-            // ,joint[LF].Temp_mos,joint[LF].Temp_motor,joint[LF].Error,chassis.wheel_turn_torque,joint[LB].Temp_mos,joint[LB].Temp_motor,joint[LB].Error
-            // ,joint[RF].Temp_mos,joint[RF].Temp_motor,joint[RF].Error,chassis.wheel_turn_torque,joint[RB].Temp_mos,joint[RB].Temp_motor,joint[RB].Error
-            // joint[LF].Error,joint[LB].Error,joint[RF].Error,joint[RB].Error,chassis.chassis_ctrl_mode,
+            // ,joint[LF].Temp_mos,joint[LF].Temp_motor,joint[LF].Error,joint[LB].Temp_mos,joint[LB].Temp_motor,joint[LB].Error
+            // ,joint[RF].Temp_mos,joint[RF].Temp_motor,joint[RF].Error,joint[RB].Temp_mos,joint[RB].Temp_motor,joint[RB].Error
+            // ,joint[LF].Error,joint[LB].Error,joint[RF].Error,joint[RB].Error
+            // chassis.chassis_ctrl_mode,
             //
             // chassis.leg_L.leg_is_shortest,
             // chassis.leg_L.leg_ready_to_selfhelp,
@@ -1404,5 +1354,7 @@
             //
             // chassis.leg_L.wheel_torque,chassis.leg_R.wheel_torque
             // );
+
+
 
     }

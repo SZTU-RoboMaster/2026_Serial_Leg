@@ -22,7 +22,7 @@
 #define user_malloc malloc
 #endif
 
-// ����б�º���
+// ????��?????
 void slope_following(float *target,float *set,float acc)
 {
     if(*target > *set)
@@ -40,7 +40,7 @@ void slope_following(float *target,float *set,float acc)
 
 }
 
-// ����˷�
+// ??????
 void Matrix_multiply(int rows1, int cols1, float matrix1[rows1][cols1],
                      int rows2, int cols2, float matrix2[rows2][cols2],
                      float result[rows1][cols2]) {
@@ -58,7 +58,7 @@ void Matrix_multiply(int rows1, int cols1, float matrix1[rows1][cols1],
     }
 }
 
-//�޷�����
+//???????
 float float_constrain(float Value, float minValue, float maxValue)
 {
     if (Value < minValue)
@@ -80,7 +80,7 @@ int float_rounding(float raw)
     return integer;
 }
 
-//�жϷ���λ
+//?��????��
 float sign(float value)
 {
     if (value >= 0.0f)
@@ -94,10 +94,10 @@ float sign(float value)
 }
 
 /**
-  * @brief          ��С���˷���ʼ��
-  * @param[in]      ��С���˷��ṹ��
-  * @param[in]      ������
-  * @retval         ���ؿ�
+  * @brief          ??��??????????
+  * @param[in]      ??��?????????
+  * @param[in]      ??????
+  * @retval         ?????
   */
 void OLS_Init(Ordinary_Least_Squares_t *OLS, uint16_t order)
 {
@@ -113,10 +113,10 @@ void OLS_Init(Ordinary_Least_Squares_t *OLS, uint16_t order)
 }
 
 /**
-  * @brief          ��С���˷����
-  * @param[in]      ��С���˷��ṹ��
-  * @param[in]      �ź�����������һ������ʱ����
-  * @param[in]      �ź�ֵ
+  * @brief          ??��????????
+  * @param[in]      ??��?????????
+  * @param[in]      ?????????????????????????
+  * @param[in]      ????
   */
 void OLS_Update(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 {
@@ -155,11 +155,11 @@ void OLS_Update(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 }
 
 /**
-  * @brief          ��С���˷���ȡ�ź�΢��
-  * @param[in]      ��С���˷��ṹ��
-  * @param[in]      �ź�����������һ������ʱ����
-  * @param[in]      �ź�ֵ
-  * @retval         ����б��k
+  * @brief          ??��??????????????
+  * @param[in]      ??��?????????
+  * @param[in]      ?????????????????????????
+  * @param[in]      ????
+  * @retval         ????��??k
   */
 float OLS_Derivative(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 {
@@ -200,9 +200,9 @@ float OLS_Derivative(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 }
 
 /**
-  * @brief          ��ȡ��С���˷���ȡ�ź�΢��
-  * @param[in]      ��С���˷��ṹ��
-  * @retval         ����б��k
+  * @brief          ?????��??????????????
+  * @param[in]      ??��?????????
+  * @retval         ????��??k
   */
 float Get_OLS_Derivative(Ordinary_Least_Squares_t *OLS)
 {
@@ -210,11 +210,11 @@ float Get_OLS_Derivative(Ordinary_Least_Squares_t *OLS)
 }
 
 /**
-  * @brief          ��С���˷�ƽ���ź�
-  * @param[in]      ��С���˷��ṹ��
-  * @param[in]      �ź�����������һ������ʱ����
-  * @param[in]      �ź�ֵ
-  * @retval         ����ƽ�����
+  * @brief          ??��???????????
+  * @param[in]      ??��?????????
+  * @param[in]      ?????????????????????????
+  * @param[in]      ????
+  * @retval         ??????????
   */
 float OLS_Smooth(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 {
@@ -256,9 +256,9 @@ float OLS_Smooth(Ordinary_Least_Squares_t *OLS, float deltax, float y)
 }
 
 /**
-  * @brief          ��ȡ��С���˷�ƽ���ź�
-  * @param[in]      ��С���˷��ṹ��
-  * @retval         ����ƽ�����
+  * @brief          ?????��???????????
+  * @param[in]      ??��?????????
+  * @retval         ??????????
   */
 float Get_OLS_Smooth(Ordinary_Least_Squares_t *OLS)
 {
@@ -266,16 +266,16 @@ float Get_OLS_Smooth(Ordinary_Least_Squares_t *OLS)
 }
 
 /**
- * @brief �� [-PI, PI] ӳ��Ϊ [0, 2PI]
- * @param angle ԭʼ�Ƕȣ���Χ��-PI ~ PI��
- * @return ӳ���Ƕȣ�0 ~ 2PI��
+ * @brief ?? [-PI, PI] ???? [0, 2PI]
+ * @param angle ????????��??-PI ~ PI??
+ * @return ???????0 ~ 2PI??
  */
 float angle_map(float angle)
 {
-    // ���������Ƕȣ�
+    // ????????????
     if (angle < 0.0f) {
         return angle + 2*PI;
     }
-    // ����/0 ֱ�ӷ��أ�0��0��90��90��180��180
+    // ????/0 ???????0??0??90??90??180??180
     return angle;
 }
