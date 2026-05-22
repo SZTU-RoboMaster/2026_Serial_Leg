@@ -201,25 +201,31 @@ void set_right_dm8009p_MIT(Dm8009P *right_motor, float pos, float speed, float k
 
 /* =========================== 关节电机反馈解析 =========================== */
 
+     //    当 Error 的值为 8 时，错误码为 8（过压）；
+     //              值为 9 时，错误码为 9（欠压）；
+     //              值为 10 时，错误码为 A（过电流）；
+     //              值为 11 时，错误码为 B（MOS 过温）；
+     //              值为 12 时，错误码为 C（电机线圈过温）；
+     //              值为 13 时，错误码为 D（通讯丢失）；
+     //              值为 14 时，错误码为 E（过载）
+
 void dm8009p_info_update(Dm8009P *motor, uint8_t data[])
 {
     int pos_int = (data[1] << 8) | data[2];
     int speed_int = (data[3] << 4) | (data[4] >> 4);
-    int torque_int = (data[4] & 0xF) << 8 | data[5];
+    int torque_int = ((data[4] & 0x0F) << 8) | data[5];
 
-    motor->Temp_mos   = (float)(data[6] & 0xFF);          // MOS 管温度
-    motor->Temp_motor = (float)(data[7] & 0xFF);          // 转子温度
-    motor->Error      = (float)((data[0] >> 4) & 0x0F);   // 错误码
+    float pos_new = uint_to_float(pos_int, DM8009P_P_MIN, DM8009P_P_MAX, 16);
+    float vel_new = uint_to_float(speed_int, DM8009P_V_MIN, DM8009P_V_MAX, 12);
+    float torque_new = uint_to_float(torque_int, DM8009P_T_MIN, DM8009P_T_MAX, 12);
+    float temp_mos_new = (float)(data[6] & 0xFF);
+    float temp_motor_new = (float)(data[7] & 0xFF);
+    float err_new = (float)((data[0] >> 4) & 0x0F);
 
-    //    当 Error 的值为 8 时，错误码为 8（过压）；
-    //              值为 9 时，错误码为 9（欠压）；
-    //              值为 10 时，错误码为 A（过电流）；
-    //              值为 11 时，错误码为 B（MOS 过温）；
-    //              值为 12 时，错误码为 C（电机线圈过温）；
-    //              值为 13 时，错误码为 D（通讯丢失）；
-    //              值为 14 时，错误码为 E（过载）
-
-    motor->pos_r = uint_to_float(pos_int, DM8009P_P_MIN, DM8009P_P_MAX, 16);
-    motor->angular_vel = uint_to_float(speed_int, DM8009P_V_MIN, DM8009P_V_MAX, 12);
-    motor->torque = uint_to_float(torque_int, DM8009P_T_MIN, DM8009P_T_MAX, 12);
+        motor->Temp_mos = temp_mos_new;
+        motor->Temp_motor = temp_motor_new;
+        motor->Error = err_new;
+        motor->pos_r = pos_new;
+        motor->angular_vel = vel_new;
+        motor->torque = torque_new;
 }

@@ -3,6 +3,7 @@
 #include "joint.h"
 #include "board_communication_task.h"
 #include "DJI_motor.h"
+#include "robot_def.h"
 #include "vofa.h"
 
 /* =========================== 左关节 FDCAN发送结构体 =========================== */
@@ -70,23 +71,28 @@ static void FDCAN1_Config(void)
 
     FilterConfig.IdType = FDCAN_STANDARD_ID;
     FilterConfig.FilterIndex = 0;
-    FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FilterConfig.FilterType = FDCAN_FILTER_DUAL;
     FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FilterConfig.FilterID1 = 0x00000000;
-    FilterConfig.FilterID2 = 0x00000000;
+    FilterConfig.FilterID1 = JOINT_LF_RECEIVE;
+    FilterConfig.FilterID2 = JOINT_LB_RECEIVE;
 
     if (HAL_FDCAN_ConfigFilter(&hfdcan1, &FilterConfig) != HAL_OK)
     {
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) !=
-        HAL_OK)
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+                                     FDCAN_REJECT,
+                                     FDCAN_REJECT,
+                                     FDCAN_FILTER_REMOTE,
+                                     FDCAN_FILTER_REMOTE) != HAL_OK)
     {
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
+    if (HAL_FDCAN_ActivateNotification(&hfdcan1,
+                                       FDCAN_IT_RX_FIFO0_NEW_MESSAGE,
+                                       0) != HAL_OK)
     {
         Error_Handler();
     }
@@ -97,31 +103,38 @@ static void FDCAN1_Config(void)
     }
 }
 
+
 /* =========================== FDCAN2初始化 =========================== */
+
 
 static void FDCAN2_Config(void)
 {
     FDCAN_FilterTypeDef FilterConfig;
 
     FilterConfig.IdType = FDCAN_STANDARD_ID;
-    FilterConfig.FilterIndex = 1; // ������������Ҫ�غ�
-    FilterConfig.FilterType = FDCAN_FILTER_MASK;
+    FilterConfig.FilterIndex = 0;
+    FilterConfig.FilterType = FDCAN_FILTER_DUAL;
     FilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    FilterConfig.FilterID1 = 0x00000000;
-    FilterConfig.FilterID2 = 0x00000000;
+    FilterConfig.FilterID1 = JOINT_RF_RECEIVE;
+    FilterConfig.FilterID2 = JOINT_RB_RECEIVE;
 
     if (HAL_FDCAN_ConfigFilter(&hfdcan2, &FilterConfig) != HAL_OK)
     {
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE) !=
-        HAL_OK)
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,
+                                     FDCAN_REJECT,
+                                     FDCAN_REJECT,
+                                     FDCAN_FILTER_REMOTE,
+                                     FDCAN_FILTER_REMOTE) != HAL_OK)
     {
         Error_Handler();
     }
 
-    if (HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
+    if (HAL_FDCAN_ActivateNotification(&hfdcan2,
+                                       FDCAN_IT_RX_FIFO0_NEW_MESSAGE,
+                                       0) != HAL_OK)
     {
         Error_Handler();
     }

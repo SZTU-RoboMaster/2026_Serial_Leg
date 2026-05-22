@@ -116,7 +116,7 @@ static void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, float *q) {
 
         BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回导航系n
 
-        chassis.imu_reference.robot_ax = -INS.MotionAccel_n[1];
+        chassis.imu_reference.robot_ax = - INS.MotionAccel_n[1];
     }
 
 

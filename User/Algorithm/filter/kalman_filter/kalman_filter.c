@@ -128,6 +128,10 @@
 
 #include "kalman_filter.h"
 
+#include <stdio.h>
+
+#include "vofa.h"
+
 uint16_t sizeof_float, sizeof_double;
 
 static void H_K_R_Adjustment(KalmanFilter_t *kf);
@@ -331,6 +335,7 @@ void Kalman_Filter_SetK(KalmanFilter_t *kf)
         kf->S.numRows = kf->R.numRows;
         kf->S.numCols = kf->R.numCols;
         kf->MatStatus = Matrix_Add(&kf->temp_matrix1, &kf->R, &kf->S); // S = H P'(k) HT + R
+
         kf->MatStatus = Matrix_Inverse(&kf->S, &kf->temp_matrix1);     // temp_matrix1 = inv(H·P'(k)·HT + R)
         kf->temp_matrix.numRows = kf->Pminus.numRows;
         kf->temp_matrix.numCols = kf->HT.numCols;

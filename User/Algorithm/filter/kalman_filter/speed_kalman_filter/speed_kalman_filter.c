@@ -1,4 +1,7 @@
 #include "speed_kalman_filter.h"
+
+#include <stdio.h>
+
 #include "wheel.h"
 #include "robot_def.h"
 #include "vofa.h"

@@ -13,7 +13,7 @@
  *                                 遥控                                      *
  *******************************************************************************/
 
-/* kss：遥控器路径
+/* 遥控器路径
                 x : 2-左手 ; 0-右手
                 y : 3-左手 ; 1-右手 */
 
@@ -90,29 +90,6 @@
     #define PHI4_OFFSET 0
 
 /* =========================== 目标状态 ============================= */
-
-    /* =========================== φ ============================= */
-
-        // -1.29抬头平衡
-        // 0.24 前
-        /* iss：调Q之后要改 */
-        //  -1.45
-
-        #define PHI_OFFSET 0.0f
-        #define PHI_OFFSET_CON 0.3f// -0.5f// -1.14// -1.45f //为了补偿质心偏移 //大于-0.339
-
-    /* =========================== θ ============================= */
-
-    // 0.05稍快往后 -0.1慢慢往后 -0.15不动  -0.2慢慢往前
-    // -0.3快速往后 0.3慢慢往前
-    // 0.25 慢慢往后 最终抬头 //0.22
-        #define THETA_OFFSET -0.2f //0.129f
-        #define THETA_OFFSET_L -0.35f ///0.345f //0.347 0.348 0.349f 0.350 0.352 0.354 0.359 0.360
-        #define THETA_OFFSET_R -0.372f //0.252f //0.250 0.256 0.245f 0.254 0.252 0.262 0.256 0.261
-        #define THETA_OFFSET_CON -0.35f //-0.7f //0.25不错 小于-0.658 -0.373
-        #define THETA_OFFSET_L_CON THETA_OFFSET_L + THETA_OFFSET_CON
-        #define THETA_OFFSET_R_CON THETA_OFFSET_R + THETA_OFFSET_CON
-        #define THETA_OFFSET_CON1 THETA_OFFSET_CON+THETA_OFFSET
 
 /* =========================== 小陀螺旋转速度 ============================= */
 
@@ -202,7 +179,7 @@
 
         /* =========================== 自救θ-PID ============================= */
 
-            #define CHASSIS_THETA_PID_P 15.0f
+            #define CHASSIS_THETA_PID_P 7.0f
             #define CHASSIS_THETA_PID_I 1.0f
             #define CHASSIS_THETA_PID_D 15.0f
             #define CHASSIS_THETA_PID_IOUT_LIMIT 10.0f
@@ -569,11 +546,13 @@ typedef struct {
 
             bool leg_shortest_is_ready;
             bool leg_pos_is_ready;
+            bool leg_pitch_is_ready;
             bool leg_selfhelp_ready;
 
             Pid leg_theta_reset_pid;
             float target_theta;
             float ramp_target_theta;
+            float theta_torque;
     } Leg;
 
 /* =========================== 底盘结构体 ============================= */
@@ -675,7 +654,6 @@ typedef struct {
 
                 bool chassis_selfhelp_finish;
                 bool chassis_ready_to_balance;
-                Pos where_to_ready;
 
     } Chassis;
 
