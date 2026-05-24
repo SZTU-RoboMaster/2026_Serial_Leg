@@ -8,6 +8,6 @@ void vmc_phi_update(Leg *leg_L, Leg *leg_R);
 
 void vmc_forward_dynamics(VMC *vmc, const ChassisPhysicalConfig *physical_config);
 
-void vmc_calc(void);
+void vmc_calc(float dt);
 
 #endif

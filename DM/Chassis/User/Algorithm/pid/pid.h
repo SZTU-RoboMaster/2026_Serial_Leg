@@ -66,10 +66,10 @@ extern void pid_reset(Pid *pid, float kp, float ki, float kd);
   * @param[in] set: 目标数据
   * @retval    PID 计算输出
   */
-extern float pid_calc(Pid *pid, float get, float set);
+extern float pid_calc(Pid *pid, float get, float set, float dt);
 extern float pid_calc_balance(Pid *pid, float get, float set,float gyro_y);
 extern float pid_anti_windup_calc(Pid *pid, float get, float set);
-extern float pid_loop_calc(Pid *pid,float get,float set,float max_value,float min_value);
+extern float pid_loop_calc(Pid *pid,float get,float set,float max_value,float min_value,float dt);
 float pid_calc_KI_Separation(Pid* pid,float get,float set,float err_threshold);
 float pid_reset_i_calc(Pid *pid, float get, float set, float iout_threshold);
 

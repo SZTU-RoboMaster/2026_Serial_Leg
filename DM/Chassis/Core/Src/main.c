@@ -111,14 +111,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
     DWT_Init(480);
 
-    // CAN��������ʼ��
+    // CAN Filter Init
     bsp_can_init();
 
-    // SBUS˫��������ʼ��
+    // SBUS Double Buffer Init
     USART_RxDMA_MultiBuffer_Init(&huart5, (uint32_t *) SBUS_MultiRx_Buf[0], (uint32_t *) SBUS_MultiRx_Buf[1],
                                  SBUS_RX_BUF_NUM);
 
-    // ����IMU��ʼ��
+    // DM_IMU Init
     DM_IMU_Init();
 
   /* USER CODE END 2 */

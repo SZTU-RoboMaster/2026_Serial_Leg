@@ -17,10 +17,10 @@
 
 /** 宏定义 **/
 // phi偏置
-#define PHI1_OFFSET 2.20f
-#define PHI4_OFFSET 1.10f
+#define PHI1_OFFSET (2.2f)
+#define PHI4_OFFSET (1.0f)
 
-#define THETA_OFFSET 0.1f // 0.1rad
+#define THETA_OFFSET 0.0f // 0.1rad
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
@@ -47,14 +47,35 @@
 #define MAX_CHASSIS_VX_SPEED 2.1f
 #define MAX_WHEEL_TORQUE 3.0f
 #define MIN_WHEEL_TORQUE (-3.0f)
-#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
-#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
+//#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
+//#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
+#define MAX_JOINT_TORQUE 15.0f
+#define MIN_JOINT_TORQUE (-15.0f)
+
+// 倒地/失控识别阈值：外部项目思路，pitch/roll/theta任一明显越界即进入自救
+#define CHASSIS_FALL_THETA_ENTER (45.0f * DEGREE_TO_RAD)
+#define CHASSIS_FALL_ATTITUDE_ENTER (45.0f * DEGREE_TO_RAD)
+#define CHASSIS_FALL_L0_ENTER 0.28f
+// 倒地自救阶段目标：可选stage0中间姿态，stage1收腿且theta回零
+#define CHASSIS_SELFHELP_THETA_STAGE0 (0.36f * PI)
+#define CHASSIS_SELFHELP_L0_STAGE0 MAX_L0
+#define CHASSIS_SELFHELP_THETA_STAGE1 0.0f
+#define CHASSIS_SELFHELP_L0_STAGE1 MIN_L0
+#define CHASSIS_SELFHELP_STAGE0_L0_MARGIN 0.10f
+#define CHASSIS_SELFHELP_THETA_EXIT (15.0f * DEGREE_TO_RAD)
+#define CHASSIS_SELFHELP_L0_EXIT 0.05f
+#define CHASSIS_SELFHELP_EXIT_CONFIRM_COUNT 100U
+// 倒地自救theta复位PID：输出作为VMC的Tp_set_point，用于把theta拉回目标附近
+#define CHASSIS_SELFHELP_PHI0_PID_P 20.0f
+#define CHASSIS_SELFHELP_PHI0_PID_I 0.0f
+#define CHASSIS_SELFHELP_PHI0_PID_D 0.0f
+#define CHASSIS_SELFHELP_PHI0_PID_IOUT_LIMIT 0.0f
+#define CHASSIS_SELFHELP_PHI0_PID_OUT_LIMIT 5.0f
 
 /** 遥控器值映射 **/
 #define RC_TO_VX  (MAX_CHASSIS_VX_SPEED/660)
 #define MAX_CHASSIS_YAW_INCREMENT 0.01f
 #define RC_TO_YAW_INCREMENT (MAX_CHASSIS_YAW_INCREMENT/660)
-
 
 /****** PID参数 ******/
 
@@ -75,21 +96,21 @@
 
 /** Joint **/
 // 防劈叉PID
-#define CHASSIS_LEG_COORDINATION_PID_P 0.0f // 1
+#define CHASSIS_LEG_COORDINATION_PID_P 5.0f // 1
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_D 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 10.0f
 
 // 腿长位置环PID
-#define CHASSIS_LEG_L0_POS_PID_P 6.0f
+#define CHASSIS_LEG_L0_POS_PID_P 20.0f
 #define CHASSIS_LEG_L0_POS_PID_I 0.0f
 #define CHASSIS_LEG_L0_POS_PID_D 0.0f
 #define CHASSIS_LEG_L0_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 2.0f
 
 // 腿长速度环PID
-#define CHASSIS_LEG_L0_SPEED_PID_P 10.0f
+#define CHASSIS_LEG_L0_SPEED_PID_P 25.0f
 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_D 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
@@ -125,6 +146,7 @@ typedef enum {
 /** 底盘运行状态 **/
 typedef enum {
     CHASSIS_FALL = 1, // 倒地状态，需要倒地自救
+    CHASSIS_STAND_UP, // 自救完成后的起身状态，使用轮毂LQR回到平衡点
     CHASSIS_NORMAL, // 正常运行状态
 } ChassisState;
 
@@ -204,6 +226,7 @@ typedef struct {// 五连杆中的角度
 
     float phi1_dot;
     float phi4_dot;
+    float phi3_dot;
 
     float phi0; // 腿摆角
     float d_phi0;// 摆角变化速度
@@ -332,6 +355,7 @@ typedef struct {
 
     /** 状态变量 **/
     StateVariable state_variable_feedback;  // 反馈状态变量
+    StateVariable state_variable_ref;       // 期望状态变量
     StateVariable state_variable_error;     // 误差 = 反馈 - 期望
     StateVariable state_variable_wheel_out; // 各个状态变量通过lqr计算的关于轮毂的输出
     StateVariable state_variable_joint_out; // 各个状态变量通过lqr计算的关于关节的输出
@@ -364,6 +388,7 @@ typedef struct {
     /** 遥控器信息 **/
     ChassisCtrlMode chassis_ctrl_mode;
     ChassisCtrlMode chassis_last_ctrl_mode;
+    ChassisState chassis_state; // ENABLE任务内使用的底盘运行状态，用于区分正常运行和倒地自救
     ChassisCtrlInfo chassis_ctrl_info;
 
     /** 腿部 **/
@@ -393,9 +418,9 @@ typedef struct {
     Pid chassis_roll_pid;
     float roll_compensatory_torque; // Roll补偿力矩
 
-    // flag
-    bool init_flag;            // 底盘初始化完成标志位
-    bool chassis_recover_finish;
+    // 倒地自救theta复位PID，分别控制左右腿theta回到目标附近
+    Pid chassis_selfhelp_phi0_pid_L;
+    Pid chassis_selfhelp_phi0_pid_R;
 
 } Chassis;
 

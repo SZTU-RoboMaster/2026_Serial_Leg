@@ -11,7 +11,7 @@
 
 void Speed_EstimateKF_Init(KalmanFilter_t *EstimateKF);
 
-void speed_calc(void);
+void speed_calc(float dt);
 
 extern KalmanFilter_t Speed_EstimateKF;
 

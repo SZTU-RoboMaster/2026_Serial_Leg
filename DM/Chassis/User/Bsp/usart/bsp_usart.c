@@ -12,32 +12,32 @@ __attribute__((section (".AXI_SRAM")))uint8_t SBUS_MultiRx_Buf[2][SBUS_RX_BUF_NU
 void USART_RxDMA_MultiBuffer_Init(UART_HandleTypeDef *huart, uint32_t *DstAddress, uint32_t *SecondMemAddress,
                                   uint32_t DataLength) {
 
-    huart->ReceptionType = HAL_UART_RECEPTION_TOIDLE;
+    huart->ReceptionType = HAL_UART_RECEPTION_TOIDLE; // 接收数据直到 IDLE 中断触发
 
     huart->RxXferSize = DataLength * 2;
 
-    SET_BIT(huart->Instance->CR3, USART_CR3_DMAR);
+    SET_BIT(huart->Instance->CR3, USART_CR3_DMAR); // 使能DMA搬运
 
-    __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE);
+    __HAL_UART_ENABLE_IT(huart, UART_IT_IDLE); // 使能空闲中断
 
     do {
         __HAL_DMA_DISABLE(huart->hdmarx);
-    } while (((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->CR & DMA_SxCR_EN);
+    } while (((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->CR & DMA_SxCR_EN); // 如果与运算的结果为1，则说明DMA使能
 
     /* Configure the source memory Buffer address  */
-    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->PAR = (uint32_t) &huart->Instance->RDR;
+    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->PAR = (uint32_t) &huart->Instance->RDR; // DMA源地址
 
     /* Configure the destination memory Buffer address */
-    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->M0AR = (uint32_t) DstAddress;
+    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->M0AR = (uint32_t) DstAddress; // DMA目的地址：缓冲区0
 
     /* Configure DMA Stream destination address */
-    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->M1AR = (uint32_t) SecondMemAddress;
+    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->M1AR = (uint32_t) SecondMemAddress; // DMA目的地址：缓冲区1
 
     /* Configure the length of data to be transferred from source to destination */
-    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->NDTR = DataLength;
+    ((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->NDTR = DataLength; // DMA 剩余计数器
 
     /* Enable double memory buffer */
-    SET_BIT(((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->CR, DMA_SxCR_DBM);
+    SET_BIT(((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->CR, DMA_SxCR_DBM); // 使能双缓冲区
 
     /* Enable DMA */
     __HAL_DMA_ENABLE(huart->hdmarx);
@@ -48,6 +48,7 @@ static void USER_USART5_RxHandler(UART_HandleTypeDef *huart, uint16_t Size) {
 
     /* Current memory buffer used is Memory 0 */
     if (((((DMA_Stream_TypeDef *) huart->hdmarx->Instance)->CR) & DMA_SxCR_CT) == RESET) {
+        // DMA_SxCR_CT 为 0，说明正在使用缓冲区0；为 1 说明在使用缓冲区1
 
         /* Disable DMA */
         __HAL_DMA_DISABLE(huart->hdmarx);
@@ -97,7 +98,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
-    if (huart == &huart5) {
+    if (huart == &huart5)
+    {
         USER_USART5_RxHandler(huart, Size);
     }
 

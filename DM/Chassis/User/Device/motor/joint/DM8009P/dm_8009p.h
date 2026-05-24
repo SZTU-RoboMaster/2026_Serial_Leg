@@ -6,8 +6,8 @@
 
 /********************   电机参数限制   *****************************/
 
-#define DM8009P_P_MIN -12.5f
-#define DM8009P_P_MAX 12.5f
+#define DM8009P_P_MIN -3.14f //-12.5f
+#define DM8009P_P_MAX 3.14f  //12.5f
 #define DM8009P_V_MIN -45.0f
 #define DM8009P_V_MAX 45.0f
 #define DM8009P_KP_MIN 0.0f

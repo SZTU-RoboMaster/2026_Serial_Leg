@@ -162,11 +162,13 @@ static void FDCAN1_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
         case JOINT_LF_RECEIVE: {
             dm8009p_info_update(&joint[LF], Data);
+//            USART_Vofa_Justfloat_Transmit(joint[LF].pos_r, joint[LF].angular_vel);
             break;
         }
 
         case JOINT_LB_RECEIVE: {
             dm8009p_info_update(&joint[LB], Data);
+//            USART_Vofa_Justfloat_Transmit(joint[LB].pos_r, joint[LB].angular_vel);
             break;
         }
 
@@ -184,11 +186,13 @@ static void FDCAN2_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
         case JOINT_RF_RECEIVE: {
             dm8009p_info_update(&joint[RF], Data);
+//            USART_Vofa_Justfloat_Transmit(joint[RF].pos_r, joint[RF].angular_vel);
             break;
         }
 
         case JOINT_RB_RECEIVE: {
             dm8009p_info_update(&joint[RB], Data);
+//            USART_Vofa_Justfloat_Transmit(joint[RB].pos_r, joint[RB].angular_vel);
             break;
         }
 
@@ -206,11 +210,19 @@ static void FDCAN3_RxFifo0RxHandler(uint32_t *StdId, uint8_t Data[]) {
 
         case WHEEL_L_RECEIVE: {
             DJI_Info_Update(&wheel[L], Data);
+//            USART_Vofa_Justfloat_Transmit(wheel[L].ecd, wheel[L].speed_rpm);
+
+//            float filted_rpm =  wheel[L].speed_aps / RPM_TO_ANGLE_PER_SEC;
+//            USART_Vofa_Justfloat_Transmit(wheel[L].speed_rpm, filted_rpm);
             break;
         }
 
         case WHEEL_R_RECEIVE: {
             DJI_Info_Update(&wheel[R], Data);
+//            USART_Vofa_Justfloat_Transmit(wheel[R].ecd, wheel[R].speed_rpm);
+
+//            float filted_rpm =  wheel[R].speed_aps / RPM_TO_ANGLE_PER_SEC;
+//            USART_Vofa_Justfloat_Transmit(wheel[R].speed_rpm, filted_rpm);
             break;
         }
 

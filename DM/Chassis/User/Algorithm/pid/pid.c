@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include "pid.h"
+#include "robot_def.h"
 
 static void abs_limit(float *a, float ABS_MAX)
 {
@@ -73,15 +74,19 @@ void pid_init(Pid *pid, float max_out, float intergral_limit,
   * @param[in] set: 目标数据
   * @retval    PID 计算输出
   */
-float pid_calc(Pid *pid, float get, float set)
+float pid_calc(Pid *pid, float get, float set, float dt)
 {
+    if (dt <= 0.000001f) {
+        dt = CHASSIS_PERIOD * 0.001f;
+    }
+
     pid->get = get;
     pid->set = set;
     pid->err[NOW] = set - get;
 
     pid->pout = pid->p * pid->err[NOW];
-    pid->iout += pid->i * pid->err[NOW];
-    pid->dout = pid->d * (pid->err[NOW] - pid->err[LAST]);
+    pid->iout += pid->i * pid->err[NOW] * dt;
+    pid->dout = pid->d * (pid->err[NOW] - pid->err[LAST]) / dt;
 
     abs_limit(&(pid->iout), pid->integral_limit);
     pid->out = pid->pout + pid->iout + pid->dout;
@@ -93,20 +98,20 @@ float pid_calc(Pid *pid, float get, float set)
 }
 
 
-float pid_loop_calc(Pid *pid,float get,float set,float max_value,float min_value){
+float pid_loop_calc(Pid *pid,float get,float set,float max_value,float min_value,float dt){
     float gap,mid;
     mid=(max_value-min_value)/2;
     gap=set-get;
     if(gap>=mid){
         gap-=max_value-min_value;
-        return pid_calc(pid,-gap,0);
+        return pid_calc(pid,-gap,0,dt);
     }
     else if(gap<=-mid){
         gap+=max_value-min_value;
-        return pid_calc(pid,-gap,0);
+        return pid_calc(pid,-gap,0,dt);
     }
     else{
-        return pid_calc(pid,get,set);
+        return pid_calc(pid,get,set,dt);
     }
 
 }

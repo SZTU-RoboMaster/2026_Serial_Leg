@@ -147,6 +147,8 @@ void StartDefaultTask(void const * argument)
 void StartChassisTask(void const * argument)
 {
   /* USER CODE BEGIN StartChassisTask */
+    osDelay(1500);
+
     chassis_init();
     /* Infinite loop */
     for (;;) {

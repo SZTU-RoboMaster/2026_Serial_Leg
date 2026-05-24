@@ -15,22 +15,28 @@ void joint_init(void) {
 
 /** 使能关节电机 **/
 void joint_enable(void) {
-    for (int i = 0; i < 10; i++) {
         set_left_dm8009p_enable(&joint[LF]);
-        osDelay(1);
-    }
-    for (int i = 0; i < 10; i++) {
         set_left_dm8009p_enable(&joint[LB]);
-        osDelay(1);
-    }
-    for (int i = 0; i < 10; i++) {
+
         set_right_dm8009p_enable(&joint[RF]);
-        osDelay(1);
-    }
-    for (int i = 0; i < 10; i++) {
         set_right_dm8009p_enable(&joint[RB]);
-        osDelay(1);
-    }
+
+//    for (int i = 0; i < 10; i++) {
+//        set_left_dm8009p_enable(&joint[LF]);
+//        osDelay(1);
+//    }
+//    for (int i = 0; i < 10; i++) {
+//        set_left_dm8009p_enable(&joint[LB]);
+//        osDelay(1);
+//    }
+//    for (int i = 0; i < 10; i++) {
+//        set_right_dm8009p_enable(&joint[RF]);
+//        osDelay(1);
+//    }
+//    for (int i = 0; i < 10; i++) {
+//        set_right_dm8009p_enable(&joint[RB]);
+//        osDelay(1);
+//    }
 }
 
 

@@ -68,7 +68,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/filter/kalman_filter/kalman_filter.c
         User/Algorithm/filter/low_pass_filter/low_pass_filter.c
         User/Algorithm/filter/kalman_filter/speed_kalman_filter/speed_kalman_filter.c
-        User/Algorithm/filter/kalman_filter/theta_kalman_filter/theta_kalman_filter.c
         User/Algorithm/lqr/lqr.c
         User/Algorithm/pid/pid.c
         User/Algorithm/QuaternionEKF/QuaternionEKF.c
@@ -102,7 +101,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         User/Algorithm/filter/kalman_filter
         User/Algorithm/filter/low_pass_filter
         User/Algorithm/filter/kalman_filter/speed_kalman_filter
-        User/Algorithm/filter/kalman_filter/theta_kalman_filter
         User/Algorithm/lqr
         User/Algorithm/pid
         User/Algorithm/QuaternionEKF

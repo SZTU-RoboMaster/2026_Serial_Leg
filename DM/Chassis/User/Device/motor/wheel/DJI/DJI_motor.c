@@ -2,16 +2,44 @@
 #include "bsp_can.h"
 #include "user_lib.h"
 
+
+float DJI_SpeedSmoothFilter(float last_speed, float raw_speed, float smooth_coef) {
+    if (smooth_coef > 1.0f) {
+        smooth_coef = 1.0f;
+    } else if (smooth_coef < 0.0f) {
+        smooth_coef = 0.0f;
+    }
+
+    return (1.0f - smooth_coef) * last_speed + smooth_coef * raw_speed;
+}
 /**
  * @brief DJI电机解码
  * @param[in] motor  电机结构体指针
  * @param[in] data   接收到的数据的指针
  */
-void DJI_Info_Update(DJI_Motor_t *motor, uint8_t *data) {
+void DJI_Info_Update(DJI_Motor_t *motor, uint8_t *data)
+{
     /* 转子机械角度 */
     motor->ecd = (uint16_t) (data[0] << 8 | data[1]);
+
     /* 转子转速 */
     motor->speed_rpm = (int16_t) (data[2] << 8 | data[3]);
+
+    // 轻度去毛刺
+    float raw_speed_aps = (float) motor->speed_rpm * RPM_TO_ANGLE_PER_SEC;
+
+    if (motor->speed_filter_inited == 0)
+    {
+        motor->speed_aps = raw_speed_aps;
+        motor->speed_filter_inited = 1;
+    }
+    else
+    {
+        motor->speed_aps = DJI_SpeedSmoothFilter(motor->speed_aps,
+                                                 raw_speed_aps,
+                                                 DJI_SPEED_SMOOTH_COEF);
+    }
+
     /* 实际扭矩电流 */
     motor->given_current = (int16_t) (data[4] << 8 | data[5]);
     /* 电机温度 */
