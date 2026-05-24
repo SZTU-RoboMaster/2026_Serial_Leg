@@ -20,7 +20,7 @@ function K = get_k_length(leg_length,dt) % s
     l1=0.02363;                       %机体重心距离其转轴距离
     mw1=0.553;                        %驱动轮质量
     mp1=2.909;                        %杆质量
-    M1=11.427;                        %机体质量
+    M1=5.7135;                        %机体质量（单边仿真，质量为整车的一半）
    Iw1=0.000418255;                   %驱动轮转动惯量
    Ip1=(1/12) * mp1 * ((L1 + LM1)^2 + 0.05 ^ 2);%摆杆转动惯量
    IM1=0.407431240;                   %机体绕质心转动惯量
@@ -61,9 +61,9 @@ function K = get_k_length(leg_length,dt) % s
     % ==========================================================
 
 
-    Q = diag([1 1 1 1 1 1]); % theta theta_dot x x_dot phi phi_dot
+    Q = diag([1000 0.5 100 100 3000 6]); % theta theta_dot x x_dot phi phi_dot
 
-    R = [1 0;0 0.25];
+    R = [10 0;0 0.25];
     
     K = dlqr(A_d,B_d,Q,R); % dlqr函数返回一个 p x n 的矩阵
   
