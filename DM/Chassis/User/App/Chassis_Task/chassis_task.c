@@ -436,7 +436,7 @@ static void chassis_state_update(void)
 
         case CHASSIS_STAND_UP:
         {
-            // STAND_UP中暂不平衡，继续保持Stage1期望腿长和theta
+            // STAND_UP中关节保持Stage1目标，轮毂LQR尝试站立
             break;
         }
     }
@@ -553,22 +553,32 @@ static void wheel_calc(void) {
     // 轮毂LQR：根据当前腿长拟合出的K矩阵，对theta/x/phi等状态反馈输出轮毂力矩
     chassis.leg_L.wheel_torque = - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - THETA_OFFSET)
                                  - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
-                                 - wheel_K_L[2] * (chassis.leg_L.state_variable_error.x)
-                                 - wheel_K_L[3] * (chassis.leg_L.state_variable_error.x_dot)
-                                 - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
-                                 - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+                                 + wheel_K_L[2] * (chassis.leg_L.state_variable_error.x)
+                                 + wheel_K_L[3] * (chassis.leg_L.state_variable_error.x_dot);
 
-    chassis.leg_R.wheel_torque = - wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET)
-                                 - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
-                                 - wheel_K_R[2] * (chassis.leg_R.state_variable_error.x)
-                                 - wheel_K_R[3] * (chassis.leg_R.state_variable_error.x_dot)
-                                 - wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
-                                 - wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
+    chassis.leg_R.wheel_torque =  - wheel_K_R[0]   * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET)
+                                  - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+                                  + wheel_K_R[2] * (chassis.leg_R.state_variable_error.x)
+                                  + wheel_K_R[3] * (chassis.leg_R.state_variable_error.x_dot);
 
-//    chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
-//    chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
+//    chassis.leg_L.wheel_torque = - wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - THETA_OFFSET)
+//                                 - wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
+//                                 + wheel_K_L[2] * (chassis.leg_L.state_variable_error.x)
+//                                 + wheel_K_L[3] * (chassis.leg_L.state_variable_error.x_dot)
+//                                 - wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+//                                 - wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+//
+//    chassis.leg_R.wheel_torque = - wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET)
+//                                 - wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
+//                                 + wheel_K_R[2] * (chassis.leg_R.state_variable_error.x)
+//                                 + wheel_K_R[3] * (chassis.leg_R.state_variable_error.x_dot)
+//                                 - wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+//                                 - wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
-//    chassis.leg_L.wheel_torque *= -1;
+    chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
+    chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
+
+    chassis.leg_L.wheel_torque *= -1;
 
     VAL_LIMIT(chassis.leg_L.wheel_torque, MIN_WHEEL_TORQUE, MAX_WHEEL_TORQUE);
     VAL_LIMIT(chassis.leg_R.wheel_torque, MIN_WHEEL_TORQUE, MAX_WHEEL_TORQUE);
@@ -720,10 +730,11 @@ static void chassis_disable_task(void) {
 
 static void chassis_standup_balance_task(void)
 {
-    // 验证FALL->STAND_UP阶段：进入STAND_UP后不做平衡，只继续保持Stage1目标
+    // STAND_UP：关节继续保持Stage1目标，轮毂先单独接入LQR尝试站立
     chassis.chassis_ctrl_info.v_m_per_s = 0.0f;
     chassis_selfhelp_stage = CHASSIS_SELFHELP_RESET_STAGE1;
     chassis_selfhelp();
+    wheel_calc();
 }
 /** 底盘使能任务 **/
 static void chassis_enable_task(void)
@@ -743,7 +754,7 @@ static void chassis_enable_task(void)
 
     if (chassis.chassis_state == CHASSIS_STAND_UP)
     {
-        // 验证状态：不进行平衡，保持Stage1期望腿长和theta
+        // 关节保持Stage1目标，轮毂LQR尝试站立
         chassis_standup_balance_task();
         return;
     }
@@ -822,26 +833,26 @@ void chassis_task(void) {
 //                         0,
 //                         0);
 
-    MIT_send_torque_task(chassis.leg_L.joint_F_torque,
-                         chassis.leg_L.joint_B_torque,
-                         -chassis.leg_R.joint_F_torque,
-                         -chassis.leg_R.joint_B_torque,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0,
-                         0);
-
 //    MIT_send_torque_task(chassis.leg_L.joint_F_torque,
 //                         chassis.leg_L.joint_B_torque,
 //                         -chassis.leg_R.joint_F_torque,
 //                         -chassis.leg_R.joint_B_torque,
-//                         chassis.leg_L.wheel_torque,
-//                         chassis.leg_R.wheel_torque,
+//                         0,
+//                         0,
 //                         0,
 //                         0,
 //                         0,
 //                         0);
+
+    MIT_send_torque_task(chassis.leg_L.joint_F_torque,
+                         chassis.leg_L.joint_B_torque,
+                         -chassis.leg_R.joint_F_torque,
+                         -chassis.leg_R.joint_B_torque,
+                         chassis.leg_L.wheel_torque,
+                         chassis.leg_R.wheel_torque,
+                         0,
+                         0,
+                         0,
+                         0);
 
 }
