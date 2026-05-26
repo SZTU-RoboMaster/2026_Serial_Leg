@@ -61,7 +61,7 @@ function K = get_k_length(leg_length,dt) % s
     % ==========================================================
 
 
-    Q = diag([1000 0.5 100 100 3000 6]); % theta theta_dot x x_dot phi phi_dot
+    Q = diag([1000 0.5 100 1 2000 6]); % theta theta_dot x x_dot phi phi_dot
 
     R = [10 0;0 0.25];
     

@@ -45,8 +45,8 @@
 #define MAX_L0 0.30f
 
 #define MAX_CHASSIS_VX_SPEED 2.1f
-#define MAX_WHEEL_TORQUE 3.0f
-#define MIN_WHEEL_TORQUE (-3.0f)
+#define MAX_WHEEL_TORQUE 2.0f
+#define MIN_WHEEL_TORQUE (-2.0f)
 //#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
 //#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
 #define MAX_JOINT_TORQUE 15.0f
