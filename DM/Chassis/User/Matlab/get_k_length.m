@@ -61,8 +61,8 @@ function K = get_k_length(leg_length,dt) % s
     % ==========================================================
 
 
-    Q = diag([1000 0.5 100 1 2000 6]); % theta theta_dot x x_dot phi phi_dot
-
+    Q = diag([10 1 100 1 3000 1]); % theta theta_dot x x_dot phi phi_dot
+    %Q = diag([1 1 100 1 10000 1]);
     R = [10 0;0 0.25];
     
     K = dlqr(A_d,B_d,Q,R); % dlqr函数返回一个 p x n 的矩阵
