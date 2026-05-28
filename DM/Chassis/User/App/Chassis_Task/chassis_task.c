@@ -756,13 +756,13 @@ static void chassis_standup_joint_lqr_task(void)
     chassis.leg_L.state_variable_joint_out.phi_dot   = joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
-              //- chassis.leg_L.state_variable_joint_out.theta
+              - chassis.leg_L.state_variable_joint_out.theta
               - chassis.leg_L.state_variable_joint_out.theta_dot
-              //- chassis.leg_L.state_variable_joint_out.x         // 暂时关闭 x 通道
-              //- chassis.leg_L.state_variable_joint_out.x_dot     // 暂时关闭 x_dot 通道
-              //- chassis.leg_L.state_variable_joint_out.phi
-              //- chassis.leg_L.state_variable_joint_out.phi_dot
-              //+ chassis.steer_compensatory_torque
+              - chassis.leg_L.state_variable_joint_out.x         // 暂时关闭 x 通道
+              - chassis.leg_L.state_variable_joint_out.x_dot     // 暂时关闭 x_dot 通道
+              - chassis.leg_L.state_variable_joint_out.phi
+              - chassis.leg_L.state_variable_joint_out.phi_dot
+              // + chassis.steer_compensatory_torque
     ;
 
     chassis.leg_R.state_variable_joint_out.theta     = joint_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET);
@@ -773,13 +773,13 @@ static void chassis_standup_joint_lqr_task(void)
     chassis.leg_R.state_variable_joint_out.phi_dot   = joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
-              //- chassis.leg_R.state_variable_joint_out.theta
+              - chassis.leg_R.state_variable_joint_out.theta
               - chassis.leg_R.state_variable_joint_out.theta_dot
-              //- chassis.leg_R.state_variable_joint_out.x         // 暂时关闭 x 通道
-              //- chassis.leg_R.state_variable_joint_out.x_dot     // 暂时关闭 x_dot 通道
-              //- chassis.leg_R.state_variable_joint_out.phi
-              //- chassis.leg_R.state_variable_joint_out.phi_dot
-              //- chassis.steer_compensatory_torque
+              - chassis.leg_R.state_variable_joint_out.x         // 暂时关闭 x 通道
+              - chassis.leg_R.state_variable_joint_out.x_dot     // 暂时关闭 x_dot 通道
+              - chassis.leg_R.state_variable_joint_out.phi
+              - chassis.leg_R.state_variable_joint_out.phi_dot
+              // - chassis.steer_compensatory_torque
     ;
 
 
@@ -943,8 +943,8 @@ void chassis_task(void) {
     // chassis.leg_L.joint_B_torque=0;
     // chassis.leg_R.joint_F_torque=0;
     // chassis.leg_R.joint_B_torque=0;
-    chassis.leg_L.wheel_torque=0;
-    chassis.leg_R.wheel_torque=0;
+    // chassis.leg_L.wheel_torque=0;
+    // chassis.leg_R.wheel_torque=0;
     MIT_send_torque_task(chassis.leg_L.joint_F_torque,
                          chassis.leg_L.joint_B_torque,
                          -chassis.leg_R.joint_F_torque,
