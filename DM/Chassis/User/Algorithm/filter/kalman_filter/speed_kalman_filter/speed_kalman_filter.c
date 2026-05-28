@@ -4,33 +4,33 @@
 #include "vofa.h"
 #include <math.h>
 
-/** ËÙ¶È-¼ÓËÙ¶ÈÈÚºÏ **/
-KalmanFilter_t Speed_EstimateKF;       // ¿¨¶ûÂüÂË²¨Æ÷½á¹¹Ìå
+/** ï¿½Ù¶ï¿½-ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½Úºï¿½ **/
+KalmanFilter_t Speed_EstimateKF;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
 
-float vel_acc[2]; // ÂÖì±ËÙ¶ÈÓë¼ÓËÙ¶ÈÈÚºÏºóµÄ½á¹û
+float vel_acc[2]; // ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½ï¿½ÚºÏºï¿½Ä½ï¿½ï¿½
 
 float Speed_EstimateKF_F[4] = {1.0f, CHASSIS_PERIOD * 0.001f,
-                               0.0f, 1.0f};       // ×´Ì¬×ªÒÆ¾ØÕó£¬¿ØÖÆÖÜÆÚÎª0.001s
+                               0.0f, 1.0f};       // ×´Ì¬×ªï¿½Æ¾ï¿½ï¿½ó£¬¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îª0.001s
 
 float Speed_EstimateKF_P[4] = {1.0f, 0.0f,
-                               0.0f, 1.0f};    // ºóÑé¹À¼ÆÐ­·½²î³õÊ¼Öµ
+                               0.0f, 1.0f};    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð­ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Öµ
 
 float Speed_EstimateKF_Q[4] = {VEL_PROCESS_NOISE, 0.0f,
-                               0.0f, ACC_PROCESS_NOISE};    // Q¾ØÕó³õÊ¼Öµ¡¢ÏÈÑé¹À¼ÆÖµ·½²îÔëÉù
+                               0.0f, ACC_PROCESS_NOISE};    // Qï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 float Speed_EstimateKF_R[4] = {VEL_MEASURE_NOISE, 0.0f,
-                               0.0f, ACC_MEASURE_NOISE};    // ²âÁ¿ÔëÉù·½²î
+                               0.0f, ACC_MEASURE_NOISE};    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 const float Speed_EstimateKF_H[4] = {1.0f, 0.0f,
-                                     0.0f, 1.0f};    // ÉèÖÃ¾ØÕóHÎª³£Á¿
+                                     0.0f, 1.0f};    // ï¿½ï¿½ï¿½Ã¾ï¿½ï¿½ï¿½HÎªï¿½ï¿½ï¿½ï¿½
 
 
 /*******************************************************************************
- *                                  ËÙ¶ÈÈÚºÏ                                    *
+ *                                  ï¿½Ù¶ï¿½ï¿½Úºï¿½                                    *
  *******************************************************************************/
-void Speed_EstimateKF_Init(KalmanFilter_t *Speed_EstimateKF)//³õÊ¼»¯¿¨¶ûÂü½á¹¹Ìå£¬²¢°Ñ¸Ã¿ªÍ·¶¨ÒåµÄ¾ØÕó¸´ÖÆµ½½á¹¹ÌåÖÐµÄ¾ØÕó
+void Speed_EstimateKF_Init(KalmanFilter_t *Speed_EstimateKF)//ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½å£¬ï¿½ï¿½ï¿½Ñ¸Ã¿ï¿½Í·ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½ï¿½Æµï¿½ï¿½á¹¹ï¿½ï¿½ï¿½ÐµÄ¾ï¿½ï¿½ï¿½
 {
-    Kalman_Filter_Init(Speed_EstimateKF, 2, 0, 2);    // ×´Ì¬ÏòÁ¿2Î¬ Ã»ÓÐ¿ØÖÆÁ¿ ²âÁ¿ÏòÁ¿2Î¬
+    Kalman_Filter_Init(Speed_EstimateKF, 2, 0, 2);    // ×´Ì¬ï¿½ï¿½ï¿½ï¿½2Î¬ Ã»ï¿½Ð¿ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½2Î¬
 
     memcpy(Speed_EstimateKF->F_data, Speed_EstimateKF_F, sizeof(Speed_EstimateKF_F));
     memcpy(Speed_EstimateKF->P_data, Speed_EstimateKF_P, sizeof(Speed_EstimateKF_P));
@@ -41,24 +41,24 @@ void Speed_EstimateKF_Init(KalmanFilter_t *Speed_EstimateKF)//³õÊ¼»¯¿¨¶ûÂü½á¹¹Ìå
 }
 
 static void Speed_EstimateKF_Update(KalmanFilter_t *Speed_EstimateKF, float vel, float acc, float dt) {
-    // ¿¨¶ûÂüÂË²¨Æ÷²âÁ¿Öµ¸üÐÂ
-    Speed_EstimateKF->MeasuredVector[0] = vel; // ²âÁ¿ËÙ¶È
-    Speed_EstimateKF->MeasuredVector[1] = acc; // ²âÁ¿¼ÓËÙ¶È
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
+    Speed_EstimateKF->MeasuredVector[0] = vel; // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+    Speed_EstimateKF->MeasuredVector[1] = acc; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
     Speed_EstimateKF->F_data[1] = dt;
 
-    // ¿¨¶ûÂüÂË²¨Æ÷¸üÐÂº¯Êý
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âºï¿½ï¿½ï¿½
     Kalman_Filter_Update(Speed_EstimateKF);
 
-    // ÌáÈ¡¹À¼ÆÖµ
+    // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµ
     for (uint8_t i = 0; i < 2; i++) {
         vel_acc[i] = Speed_EstimateKF->FilteredValue[i];
     }
 }
 
-float wheel_w_l, wheel_w_r; // ×óÓÒÇý¶¯ÂÖ×ª×ÓÏà¶Ô´óµØµÄ½ÇËÙ¶È£¬°´Íâ²¿ÏîÄ¿phi3_w·½·¨²¹³¥
-float v_l, v_r; // ×óÓÒÇý¶¯ÂÖ×ª×ÓÏà¶Ô´óµØµÄÏßËÙ¶È
-float v_lb, v_rb; // ×óÓÒÇý¶¯ÂÖ¼ÆËã³öµÄ»úÌåËÙ¶È
-float aver_v; // »úÌåËÙ¶ÈÆ½¾ùÖµ
+float wheel_w_l, wheel_w_r; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ô´ï¿½ØµÄ½ï¿½ï¿½Ù¶È£ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½Ä¿phi3_wï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+float v_l, v_r; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ô´ï¿½Øµï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+float v_lb, v_rb; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½
+float aver_v; // ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½Æ½ï¿½ï¿½Öµ
 float phi3_dot_l;
 float phi3_dot_r;
 
@@ -67,7 +67,7 @@ void speed_calc(float dt) {
     phi3_dot_l = chassis.leg_L.vmc.forward_kinematics.fk_phi.phi3_dot;
     phi3_dot_r = chassis.leg_R.vmc.forward_kinematics.fk_phi.phi3_dot;
 
-    // °´Íâ²¿ÏîÄ¿Ë¼Â·£ºwheel_w = wheel_motor_w + phi3_w + pitch_w¡£
+    // ï¿½ï¿½ï¿½â²¿ï¿½ï¿½Ä¿Ë¼Â·ï¿½ï¿½wheel_w = wheel_motor_w + phi3_w + pitch_wï¿½ï¿½
     wheel_w_l =  ( -get_wheel_motors()->speed_aps ) * DEGREE_TO_RAD / RATIO
                +  phi3_dot_l
                +  chassis.imu_reference.pitch_gyro;
@@ -90,7 +90,7 @@ void speed_calc(float dt) {
 
     aver_v = (v_lb + v_rb) / 2;
 
-    Speed_EstimateKF_Update(&Speed_EstimateKF, aver_v, chassis.imu_reference.robot_ax, dt); // ²»¶Ï¸üÐÂ¿¨¶ûÂüÂË²¨ÖÐµÄ¸÷Ïî²ÎÊý
+    Speed_EstimateKF_Update(&Speed_EstimateKF, aver_v, chassis.imu_reference.robot_ax, dt); // ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Â¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ÐµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     /********************* x x_dot ***********************/
     float feedback_vel = vel_acc[0];
@@ -121,6 +121,12 @@ void speed_calc(float dt) {
         chassis.leg_R.state_variable_ref.x_dot = ref_vel;
         chassis.leg_L.state_variable_ref.x += ref_vel * dt;
         chassis.leg_R.state_variable_ref.x += ref_vel * dt;
+    }
+
+    // æœ‰æœŸæœ›é€Ÿåº¦è¾“å…¥æ—¶ï¼Œå°†ä½ç§»å‚è€ƒåŒæ­¥åˆ°å½“å‰ä½ç§»ï¼Œæ¶ˆé™¤ç´¯ç§¯ä½ç½®è¯¯å·®ï¼Œé¿å… LQR é˜»æŒ è¿åŠ¨
+    if (fabsf(ref_vel) > 0.01f) {
+        chassis.leg_L.state_variable_ref.x = chassis.leg_L.state_variable_feedback.x;
+        chassis.leg_R.state_variable_ref.x = chassis.leg_R.state_variable_feedback.x;
     }
 
     chassis.leg_L.state_variable_error.x =
