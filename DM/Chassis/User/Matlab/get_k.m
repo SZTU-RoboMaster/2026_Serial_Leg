@@ -38,6 +38,7 @@ a25=polyfit(leg,k25,3);
 a26=polyfit(leg,k26,3);
 
 
+
 fprintf('float wheel_fitting_factor[6][4] = {\n');
 fprintf('{%ff,%ff,%ff,%ff},\n',a11(1,1),a11(1,2),a11(1,3),a11(1,4));
 fprintf('{%ff,%ff,%ff,%ff},\n\n',a12(1,1),a12(1,2),a12(1,3),a12(1,4));

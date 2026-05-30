@@ -90,7 +90,7 @@ void speed_calc(float dt) {
 
     aver_v = (v_lb + v_rb) / 2;
 
-    Speed_EstimateKF_Update(&Speed_EstimateKF, aver_v, chassis.imu_reference.robot_ax, dt); // ���ϸ��¿������˲��еĸ������
+    Speed_EstimateKF_Update(&Speed_EstimateKF, aver_v, chassis.imu_reference.robot_ax, dt); //
 
     /********************* x x_dot ***********************/
     float feedback_vel = vel_acc[0];

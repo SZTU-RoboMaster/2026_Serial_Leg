@@ -20,7 +20,7 @@
 #define PHI1_OFFSET (2.2f)
 #define PHI4_OFFSET (1.0f)
 
-#define THETA_OFFSET 0.0f // 0.1rad
+#define THETA_OFFSET (1.0f * DEGREE_TO_RAD) // 2°
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
@@ -39,19 +39,14 @@
 #define CHASSIS_VX_CHANNEL 1
 #define CHASSIS_LEG_CHANNEL 2
 
-<<<<<<< Updated upstream
-/** 变量约束 **/
-#define MIN_L0 0.16f
-=======
-/** 锟斤拷锟斤拷约锟斤拷 **/
+/** Value limits **/
 #define MIN_L0 0.14f
->>>>>>> Stashed changes
-#define MID_L0 0.24f
+#define MID_L0 0.20f
 #define MAX_L0 0.30f
 
 #define MAX_CHASSIS_VX_SPEED 2.1f
-#define MAX_WHEEL_TORQUE 2.0f
-#define MIN_WHEEL_TORQUE (-2.0f)
+#define MAX_WHEEL_TORQUE 3.0f
+#define MIN_WHEEL_TORQUE (-3.0f)
 //#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
 //#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
 #define MAX_JOINT_TORQUE 15.0f
@@ -70,14 +65,6 @@
 #define CHASSIS_SELFHELP_THETA_EXIT (15.0f * DEGREE_TO_RAD)
 #define CHASSIS_SELFHELP_L0_EXIT 0.05f
 #define CHASSIS_SELFHELP_EXIT_CONFIRM_COUNT 100U
-<<<<<<< Updated upstream
-// 倒地自救theta复位PID：输出作为VMC的Tp_set_point，用于把theta拉回目标附近
-#define CHASSIS_SELFHELP_PHI0_PID_P 20.0f
-#define CHASSIS_SELFHELP_PHI0_PID_I 0.0f
-#define CHASSIS_SELFHELP_PHI0_PID_D 0.0f
-#define CHASSIS_SELFHELP_PHI0_PID_IOUT_LIMIT 0.0f
-#define CHASSIS_SELFHELP_PHI0_PID_OUT_LIMIT 5.0f
-=======
 #define CHASSIS_SELFHELP_GRAVITY_COMP_FF 30.0f
 
 // Leg phi0
@@ -86,7 +73,6 @@
 #define CHASSIS_SELFHELP_PHI0_PID_D 5.0f
 #define CHASSIS_SELFHELP_PHI0_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_SELFHELP_PHI0_PID_OUT_LIMIT 15.0f
->>>>>>> Stashed changes
 
 /** 遥控器值映射 **/
 #define RC_TO_VX  (MAX_CHASSIS_VX_SPEED/660)
@@ -111,45 +97,28 @@
 #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 3.0f
 
 /** Joint **/
-<<<<<<< Updated upstream
-// 防劈叉PID
-=======
 // Co PID
->>>>>>> Stashed changes
 #define CHASSIS_LEG_COORDINATION_PID_P 5.0f // 1
 #define CHASSIS_LEG_COORDINATION_PID_I 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_D 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_COORDINATION_PID_OUT_LIMIT 10.0f
 
-<<<<<<< Updated upstream
-// 腿长位置环PID
-=======
 // Leg Pos PID
->>>>>>> Stashed changes
 #define CHASSIS_LEG_L0_POS_PID_P 20.0f
 #define CHASSIS_LEG_L0_POS_PID_I 0.0f
 #define CHASSIS_LEG_L0_POS_PID_D 0.0f
 #define CHASSIS_LEG_L0_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_L0_POS_PID_OUT_LIMIT 2.0f
 
-<<<<<<< Updated upstream
-// 腿长速度环PID
-#define CHASSIS_LEG_L0_SPEED_PID_P 25.0f
-=======
 // Leg Speed PID
 #define CHASSIS_LEG_L0_SPEED_PID_P 40.0f
->>>>>>> Stashed changes
 #define CHASSIS_LEG_L0_SPEED_PID_I 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_D 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 50.0f
 
-<<<<<<< Updated upstream
-// Roll补偿PID
-=======
 // Roll PID
->>>>>>> Stashed changes
 #define CHASSIS_ROLL_PID_P 200.0f // 200
 #define CHASSIS_ROLL_PID_I 0.0f
 #define CHASSIS_ROLL_PID_D 0.0f
@@ -178,15 +147,9 @@ typedef enum {
 
 /** 底盘运行状态 **/
 typedef enum {
-<<<<<<< Updated upstream
-    CHASSIS_FALL = 1, // 倒地状态，需要倒地自救
-    CHASSIS_STAND_UP, // 自救完成后的起身状态，使用轮毂LQR回到平衡点
-    CHASSIS_NORMAL, // 正常运行状态
-=======
     CHASSIS_FALL = 1,
     CHASSIS_STAND_UP,
     CHASSIS_NORMAL,
->>>>>>> Stashed changes
 } ChassisState;
 
 
@@ -428,6 +391,7 @@ typedef struct {
     ChassisCtrlMode chassis_ctrl_mode;
     ChassisCtrlMode chassis_last_ctrl_mode;
     ChassisState chassis_state; // ENABLE任务内使用的底盘运行状态，用于区分正常运行和倒地自救
+    bool selfhelp_done;
     ChassisCtrlInfo chassis_ctrl_info;
 
     /** 腿部 **/
