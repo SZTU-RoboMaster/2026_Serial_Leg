@@ -18,27 +18,47 @@
 static uint32_t chassis_dwt_cnt = 0;
 static float chassis_dt = CHASSIS_PERIOD * 0.001f;
 
-// Stage0收腿阶段，让腿缩到最短方便回正
-// Stage1伸腿阶段，伸展到目标长度
-typedef enum {
-    CHASSIS_SELFHELP_RESET_STAGE0 = 0,
-    CHASSIS_SELFHELP_RESET_STAGE1,
-} ChassisSelfhelpResetStage;
-
-static ChassisSelfhelpResetStage chassis_selfhelp_stage = CHASSIS_SELFHELP_RESET_STAGE1;
-
-// 自复位序列就绪标志
-static bool chassis_selfhelp_sequence_ready = false;
-
-// 记录左右腿是否需要经过 Stage0 阶段
-static bool chassis_selfhelp_l_need_stage0 = false;
-static bool chassis_selfhelp_r_need_stage0 = false;
-
-// 用于 Stage1 完成后的消抖计数，确认稳定后切换到 Stand_up 状态
+// Self-help completion debounce.
 static uint16_t chassis_selfhelp_exit_count = 0;
 
+<<<<<<< Updated upstream
 // 站立计时
 static uint16_t chassis_standup_tick = 0;
+=======
+#define CHASSIS_FALL_PHI0_ENTER           (140.0f * DEGREE_TO_RAD)
+#define CHASSIS_SELFHELP_PHI0_TARGET      (0.5f * PI)
+#define CHASSIS_SELFHELP_PHI0_EXIT        (5.0f * DEGREE_TO_RAD)
+#define CHASSIS_SELFHELP_L0_HOLD_EXIT     0.02f
+
+static float Theta_format(float Angle);
+
+#define CHASSIS_CLEAR_PID_STATE(pid) do { \
+    (pid).set = 0.0f; \
+    (pid).get = 0.0f; \
+    (pid).err[0] = 0.0f; \
+    (pid).err[1] = 0.0f; \
+    (pid).pout = 0.0f; \
+    (pid).iout = 0.0f; \
+    (pid).dout = 0.0f; \
+    (pid).out = 0.0f; \
+    (pid).excess = 0.0f; \
+} while (0)
+
+static void chassis_selfhelp_reset_pid_memory(void)
+{
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_turn_pos_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_turn_speed_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_leg_coordination_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.leg_L.leg_pos_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.leg_R.leg_pos_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.leg_L.leg_speed_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.leg_R.leg_speed_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_roll_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_selfhelp_phi0_pid_L);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_selfhelp_phi0_pid_R);
+}
+
+>>>>>>> Stashed changes
 /** 底盘PID参数初始化 **/
 static void chassis_pid_init(void) {
 
@@ -296,10 +316,8 @@ static void chassis_observer_update(void) {
 /** 摔倒检测 **/
 static bool chassis_is_fall_enter(void)
 {
-    return    fabsf(chassis.imu_reference.pitch_rad            ) > CHASSIS_FALL_ATTITUDE_ENTER // pitch
-           || fabsf(chassis.imu_reference.roll_rad             ) > CHASSIS_FALL_ATTITUDE_ENTER // roll
-           || fabsf(chassis.leg_L.state_variable_feedback.theta) >    CHASSIS_FALL_THETA_ENTER // theta
-           || fabsf(chassis.leg_R.state_variable_feedback.theta) >    CHASSIS_FALL_THETA_ENTER;
+    return    chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0 > CHASSIS_FALL_PHI0_ENTER
+           || chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0 > CHASSIS_FALL_PHI0_ENTER;
 }
 
 static float chassis_angle_diff_rad(float target, float current)
@@ -307,6 +325,7 @@ static float chassis_angle_diff_rad(float target, float current)
     return atan2f(sinf(target - current), cosf(target - current));
 }
 
+<<<<<<< Updated upstream
 static bool chassis_selfhelp_need_stage0(Leg *leg)
 {
     float theta = leg->state_variable_feedback.theta;
@@ -351,17 +370,19 @@ static float chassis_selfhelp_stage_theta_target(void) {
                                                                      : CHASSIS_SELFHELP_THETA_STAGE1;
 }
 
+=======
+>>>>>>> Stashed changes
 /** 腿长到位检测 **/
 static bool chassis_selfhelp_leg_finished(float target_l0) {
-    return    fabsf(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0 - target_l0) < CHASSIS_SELFHELP_L0_EXIT
-           && fabsf(chassis.leg_R.vmc.forward_kinematics.fk_L0.L0 - target_l0) < CHASSIS_SELFHELP_L0_EXIT;
+    return    fabsf(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0 - target_l0) < CHASSIS_SELFHELP_L0_HOLD_EXIT
+           && fabsf(chassis.leg_R.vmc.forward_kinematics.fk_L0.L0 - target_l0) < CHASSIS_SELFHELP_L0_HOLD_EXIT;
 }
 
 /** theta角度到位检测 **/
 static bool chassis_selfhelp_theta_finished(float target_theta)
 {
-    return    fabsf(chassis_angle_diff_rad(target_theta, chassis.leg_L.state_variable_feedback.theta)) < CHASSIS_SELFHELP_THETA_EXIT
-           && fabsf(chassis_angle_diff_rad(target_theta, chassis.leg_R.state_variable_feedback.theta)) < CHASSIS_SELFHELP_THETA_EXIT;
+    return    fabsf(chassis_angle_diff_rad(target_theta, chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0)) < CHASSIS_SELFHELP_PHI0_EXIT
+           && fabsf(chassis_angle_diff_rad(target_theta, chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0)) < CHASSIS_SELFHELP_PHI0_EXIT;
 }
 
 /** 检查目标腿长和 theta 是否同时到位 **/
@@ -369,8 +390,8 @@ bool leg_finished   = false;
 bool theta_finished = false;
 static bool chassis_selfhelp_target_reached(void)
 {
-    leg_finished = chassis_selfhelp_leg_finished(    chassis_selfhelp_stage_l0_target()        );  // 腿长到位
-    theta_finished = chassis_selfhelp_theta_finished(chassis_selfhelp_stage_theta_target()     ); // theta到位
+    leg_finished = chassis_selfhelp_leg_finished(MIN_L0);
+    theta_finished = chassis_selfhelp_theta_finished(CHASSIS_SELFHELP_PHI0_TARGET);
 
     return   leg_finished  // 腿长到位
           && theta_finished; // theta到位
@@ -381,19 +402,18 @@ static void chassis_state_update(void)
     {
         case CHASSIS_NORMAL:
         {
-            // 检测摔倒
             if (chassis_is_fall_enter())
             {
-                // 如果摔倒，进入自复位状态并重新判断Stage0/Stage1
                 chassis.chassis_state = CHASSIS_FALL;
-                chassis_selfhelp_begin_sequence();
+                chassis_selfhelp_reset_pid_memory();
+                chassis_selfhelp_exit_count = 0;
             }
             break;
         }
 
-        // 摔倒状态
         case CHASSIS_FALL:
         {
+<<<<<<< Updated upstream
 
             if (!chassis_selfhelp_sequence_ready)
             {
@@ -414,6 +434,11 @@ static void chassis_state_update(void)
 
                 /** Stage1 完成后延时确认 -> Stand_up **/
                 else if (++chassis_selfhelp_exit_count >= CHASSIS_SELFHELP_EXIT_CONFIRM_COUNT)
+=======
+            if (chassis_selfhelp_target_reached())
+            {
+                if (++chassis_selfhelp_exit_count >= CHASSIS_SELFHELP_EXIT_CONFIRM_COUNT)
+>>>>>>> Stashed changes
                 {
                     // stage1确认完成后切换到STAND_UP状态，重置控制量并锁定偏航
                     chassis.chassis_state = CHASSIS_STAND_UP;
@@ -426,9 +451,12 @@ static void chassis_state_update(void)
                     chassis.chassis_ctrl_info.v_m_per_s = 0.0f;
                     chassis.chassis_ctrl_info.target_length = MIN_L0;
                     chassis.chassis_ctrl_info.yaw_rad = chassis.imu_reference.yaw_total_rad;
+<<<<<<< Updated upstream
+=======
+                    chassis.chassis_state = CHASSIS_STAND_UP;
+>>>>>>> Stashed changes
                 }
             }
-            /** Stage0 或 Stage1 未完成则重置消抖计数 **/
             else
             {
                 chassis_selfhelp_exit_count = 0;
@@ -438,29 +466,30 @@ static void chassis_state_update(void)
 
         case CHASSIS_STAND_UP:
         {
-            // STAND_UP阶段：轮子LQR + 关节theta LQR / 腿长PID / 最小腿长目标
             break;
         }
     }
 }
 
+<<<<<<< Updated upstream
 // Stage1自复位流程：收腿到目标长度，保持theta到目标角度
 // Stage2计算F：腿长力控
 // Stage3计算Tp：关节力矩控，theta角度到位
 float target_l0 = 0.0f;
 float target_theta = 0.0f;
+=======
+>>>>>>> Stashed changes
 static void chassis_selfhelp(void)
 {
-    /** 轮子力矩清零                                **/
     chassis.leg_L.wheel_torque = 0.0f;
     chassis.leg_R.wheel_torque = 0.0f;
 
-    /** 初始化虚拟力和力矩设定点                     **/
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = 0.0f;
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0.0f;
     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = 0.0f;
 
+<<<<<<< Updated upstream
     /** 根据Stage设定目标腿长                       **/
     target_l0 = chassis_selfhelp_stage_l0_target();
     chassis.chassis_ctrl_info.target_length = target_l0;
@@ -469,57 +498,63 @@ static void chassis_selfhelp(void)
     target_theta = chassis_selfhelp_stage_theta_target();
 
     /** 锁定当前yaw角度                             **/
+=======
+    chassis.chassis_ctrl_info.v_m_per_s = 0.0f;
+    chassis.chassis_ctrl_info.target_length = MIN_L0;
+>>>>>>> Stashed changes
     chassis.chassis_ctrl_info.yaw_rad = chassis.imu_reference.yaw_total_rad;
 
-    /** F(腿长力)                                   **/
-    /** 位置PID外环 + 速度PID内环，根据当前Stage调L0 **/
-    /** 外环位置PID                                 **/
     float L_L0_dot_set = pid_calc(&chassis.leg_L.leg_pos_pid,
                                   chassis.leg_L.vmc.forward_kinematics.fk_L0.L0,
-                                  target_l0,
+                                  MIN_L0,
                                   chassis_dt);
 
     float R_L0_dot_set = pid_calc(&chassis.leg_R.leg_pos_pid,
                                   chassis.leg_R.vmc.forward_kinematics.fk_L0.L0,
-                                  target_l0,
+                                  MIN_L0,
                                   chassis_dt);
 
-    /** 内环速度PID                                 **/
-    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = pid_calc(&chassis.leg_L.leg_speed_pid,
-                                                                                 chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot,
-                                                                                 L_L0_dot_set,
-                                                                                 chassis_dt);
+    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =
+            pid_calc(&chassis.leg_L.leg_speed_pid,
+                     chassis.leg_L.vmc.forward_kinematics.fk_L0.L0_dot,
+                     L_L0_dot_set,
+                     chassis_dt);
 
-    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = pid_calc(&chassis.leg_R.leg_speed_pid,
-                                                                                 chassis.leg_R.vmc.forward_kinematics.fk_L0.L0_dot,
-                                                                                 R_L0_dot_set,
-                                                                                 chassis_dt);
+    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point =
+            pid_calc(&chassis.leg_R.leg_speed_pid,
+                     chassis.leg_R.vmc.forward_kinematics.fk_L0.L0_dot,
+                     R_L0_dot_set,
+                     chassis_dt);
 
+<<<<<<< Updated upstream
     /** Tp(关节力矩)                                **/
     /** 计算 theta 角度误差                         **/
     float L_theta_err = chassis_angle_diff_rad(target_theta,
                                                chassis.leg_L.state_variable_feedback.theta);
     float R_theta_err = chassis_angle_diff_rad(target_theta,
                                                chassis.leg_R.state_variable_feedback.theta);
+=======
+    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
+            pid_calc(&chassis.chassis_selfhelp_phi0_pid_L,
+                     chassis.leg_L.vmc.forward_kinematics.fk_phi.phi0,
+                     CHASSIS_SELFHELP_PHI0_TARGET,
+                     chassis_dt);
 
-    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = pid_calc(&chassis.chassis_selfhelp_phi0_pid_L,
-                                                                                 chassis.leg_L.state_variable_feedback.theta,
-                                                                                 chassis.leg_L.state_variable_feedback.theta + L_theta_err,
-                                                                                 chassis_dt);
+    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point =
+            pid_calc(&chassis.chassis_selfhelp_phi0_pid_R,
+                     chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0,
+                     CHASSIS_SELFHELP_PHI0_TARGET,
+                     chassis_dt);
+>>>>>>> Stashed changes
 
-    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point = pid_calc(&chassis.chassis_selfhelp_phi0_pid_R,
-                                                                                 chassis.leg_R.state_variable_feedback.theta,
-                                                                                 chassis.leg_R.state_variable_feedback.theta + R_theta_err,
-                                                                                 chassis_dt);
-
-    /** 转向补偿力矩                                **/
-    chassis.steer_compensatory_torque = CHASSIS_LEG_COORDINATION_PID_P * (0.0f - chassis.phi0_error)
-                                        + CHASSIS_LEG_COORDINATION_PID_D * (0.0f - chassis.d_phi0_error); // 双腿协调PD补偿
+    chassis.steer_compensatory_torque = pid_calc(&chassis.chassis_leg_coordination_pid,
+                                                 chassis.phi0_error,
+                                                 0.0f,
+                                                 chassis_dt);
 
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
     chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point -= chassis.steer_compensatory_torque;
 
-    // 通过VMC解算 (Tp, F) 到关节力矩的前向动力学
     vmc_forward_dynamics(&chassis.leg_L.vmc, &chassis_physical_config);
     vmc_forward_dynamics(&chassis.leg_R.vmc, &chassis_physical_config);
 
@@ -534,7 +569,6 @@ static void chassis_selfhelp(void)
     VAL_LIMIT(chassis.leg_R.joint_B_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
 }
 
-/** 轮子控制器解算 **/
 static void wheel_calc(void) {
     /******************************* Wheel *************************************/
 
@@ -733,11 +767,15 @@ static void chassis_disable_task(void) {
     /** 清除恢复标志 **/
 //    chassis.chassis_recover_finish = false;
     chassis.chassis_state = CHASSIS_FALL;
+<<<<<<< Updated upstream
     chassis_selfhelp_sequence_ready = false;
+=======
+    chassis.selfhelp_done = false;
+>>>>>>> Stashed changes
     chassis_selfhelp_exit_count = 0;
-    chassis_standup_tick = 0;
 }
 
+<<<<<<< Updated upstream
 static void chassis_standup_joint_lqr_task(void)
 {
     chassis_K_matrix_fitting(chassis.leg_L.vmc.forward_kinematics.fk_L0.L0, joint_K_L, joint_fitting_factor);
@@ -830,13 +868,16 @@ static void chassis_standup_balance_task(void)
 
     wheel_calc();
     chassis_standup_joint_lqr_task();
+=======
+static void chassis_standup_balance_task(void)
+{
+    chassis_selfhelp();
+>>>>>>> Stashed changes
 }
 /** 底盘使能任务 **/
 static void chassis_enable_task(void)
 {
     /** 状态机调度                               **/
-    /** 包括 Fall (Stage0 Stage1) 和 Stand_up   **/
-    /** 以及 Normal                              **/
     chassis_state_update();
 
     // 摔倒状态
@@ -854,9 +895,9 @@ static void chassis_enable_task(void)
         return;
     }
 
-//    /** 正常模式：轮子LQR + 关节LQR **/
-    wheel_calc();
-    joint_calc();
+////    /** 正常模式：轮子LQR + 关节LQR **/
+//    wheel_calc();
+//    joint_calc();
 }
 /** 电机MIT模式-发送力矩指令 **/
 static void
@@ -939,18 +980,12 @@ void chassis_task(void) {
 //                         0,
 //                         0);
 
-    // chassis.leg_L.joint_F_torque=0;
-    // chassis.leg_L.joint_B_torque=0;
-    // chassis.leg_R.joint_F_torque=0;
-    // chassis.leg_R.joint_B_torque=0;
-    // chassis.leg_L.wheel_torque=0;
-    // chassis.leg_R.wheel_torque=0;
     MIT_send_torque_task(chassis.leg_L.joint_F_torque,
                          chassis.leg_L.joint_B_torque,
                          -chassis.leg_R.joint_F_torque,
                          -chassis.leg_R.joint_B_torque,
-                         chassis.leg_L.wheel_torque,
-                         chassis.leg_R.wheel_torque,
+                         0,
+                         0,
                          0,
                          0,
                          0,
