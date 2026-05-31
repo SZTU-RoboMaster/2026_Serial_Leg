@@ -20,7 +20,8 @@
 #define PHI1_OFFSET (2.2f)
 #define PHI4_OFFSET (1.0f)
 
-#define THETA_OFFSET (1.0f * DEGREE_TO_RAD) // 2°
+#define THETA_OFFSET ( (6.5f) * (DEGREE_TO_RAD) )
+#define PHI_OFFSET   ( -THETA_OFFSET )
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低

@@ -270,12 +270,8 @@ static void chassis_variable_update(float dt) {
     float R_theta_raw = (chassis.leg_R.vmc.forward_kinematics.fk_phi.phi0 - chassis.imu_reference.pitch_rad) - PI / 2;
 
     // 角度限制在 [-0.5 PI, 1.5 PI]
-    // chassis.leg_L.state_variable_feedback.theta = L_theta_raw;
-    // chassis.leg_R.state_variable_feedback.theta = R_theta_raw;
     chassis.leg_L.state_variable_feedback.theta = Theta_format(L_theta_raw);
     chassis.leg_R.state_variable_feedback.theta = Theta_format(R_theta_raw);
-
-//    USART_Vofa_Justfloat_Transmit(chassis.leg_L.state_variable_feedback.theta, chassis.leg_R.state_variable_feedback.theta);
 
     //2. theta_dot
     chassis.leg_L.state_variable_feedback.theta_dot_last = chassis.leg_L.state_variable_feedback.theta_dot;
@@ -471,7 +467,7 @@ static void chassis_selfhelp(void)
 
 static void chassis_standup_joint_hold(void)
 {
-    float phi0_target = CHASSIS_SELFHELP_PHI0_TARGET + THETA_OFFSET;
+    float phi0_target = CHASSIS_SELFHELP_PHI0_TARGET;
 
     chassis.leg_L.wheel_torque = 0.0f;
     chassis.leg_R.wheel_torque = 0.0f;
@@ -563,14 +559,14 @@ static void wheel_calc(void) {
     chassis.leg_L.state_variable_wheel_out.theta_dot = wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
     chassis.leg_L.state_variable_wheel_out.x         = wheel_K_L[2] * (chassis.leg_L.state_variable_error.x);
     chassis.leg_L.state_variable_wheel_out.x_dot     = wheel_K_L[3] * (chassis.leg_L.state_variable_error.x_dot);
-    chassis.leg_L.state_variable_wheel_out.phi       = wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f);
+    chassis.leg_L.state_variable_wheel_out.phi       = wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - PHI_OFFSET);
     chassis.leg_L.state_variable_wheel_out.phi_dot   = wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_R.state_variable_wheel_out.theta     = wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET);
     chassis.leg_R.state_variable_wheel_out.theta_dot = wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
     chassis.leg_R.state_variable_wheel_out.x         = wheel_K_R[2] * (chassis.leg_R.state_variable_error.x);
     chassis.leg_R.state_variable_wheel_out.x_dot     = wheel_K_R[3] * (chassis.leg_R.state_variable_error.x_dot);
-    chassis.leg_R.state_variable_wheel_out.phi       = wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f);
+    chassis.leg_R.state_variable_wheel_out.phi       = wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - PHI_OFFSET);
     chassis.leg_R.state_variable_wheel_out.phi_dot   = wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_L.wheel_torque = - chassis.leg_L.state_variable_wheel_out.theta
@@ -612,19 +608,19 @@ static void chassis_standup_wheel_balance(void)
                                           target_yaw_speed,
                                           chassis_dt);
 
-    chassis.leg_L.state_variable_wheel_out.theta     =                                                                  0.0f;
-    chassis.leg_L.state_variable_wheel_out.theta_dot =                                                                  0.0f;
-    chassis.leg_L.state_variable_wheel_out.x         =                                                                  0.0f;
-    chassis.leg_L.state_variable_wheel_out.x_dot     =                                                                  0.0f;
-    chassis.leg_L.state_variable_wheel_out.phi       =     wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f);
-    chassis.leg_L.state_variable_wheel_out.phi_dot   = wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
+    chassis.leg_L.state_variable_wheel_out.theta     =                                                                  0.0f ;
+    chassis.leg_L.state_variable_wheel_out.theta_dot =                                                                  0.0f ;
+    chassis.leg_L.state_variable_wheel_out.x         =                                                                  0.0f ;
+    chassis.leg_L.state_variable_wheel_out.x_dot     =                                                                  0.0f ;
+    chassis.leg_L.state_variable_wheel_out.phi       = wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi     -  0.0f);
+    chassis.leg_L.state_variable_wheel_out.phi_dot   = wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot -  0.0f);
 
-    chassis.leg_R.state_variable_wheel_out.theta     =                                                                  0.0f;
-    chassis.leg_R.state_variable_wheel_out.theta_dot =                                                                  0.0f;
-    chassis.leg_R.state_variable_wheel_out.x         =                                                                  0.0f;
-    chassis.leg_R.state_variable_wheel_out.x_dot     =                                                                  0.0f;
-    chassis.leg_R.state_variable_wheel_out.phi       =     wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f);
-    chassis.leg_R.state_variable_wheel_out.phi_dot   = wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
+    chassis.leg_R.state_variable_wheel_out.theta     =                                                                  0.0f ;
+    chassis.leg_R.state_variable_wheel_out.theta_dot =                                                                  0.0f ;
+    chassis.leg_R.state_variable_wheel_out.x         =                                                                  0.0f ;
+    chassis.leg_R.state_variable_wheel_out.x_dot     =                                                                  0.0f ;
+    chassis.leg_R.state_variable_wheel_out.phi       = wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi     -  0.0f);
+    chassis.leg_R.state_variable_wheel_out.phi_dot   = wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot -  0.0f);
 
     chassis.leg_L.wheel_torque = - chassis.leg_L.state_variable_wheel_out.phi
                                  - chassis.leg_L.state_variable_wheel_out.phi_dot;
@@ -657,7 +653,7 @@ static void joint_calc(void) {
                                                                          - joint_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f)
                                                                          - joint_K_L[2] * (chassis.leg_L.state_variable_error.x)
                                                                          - joint_K_L[3] * (chassis.leg_L.state_variable_error.x_dot)
-                                                                         - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - 0.0f)
+                                                                         - joint_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - PHI_OFFSET)
                                                                          - joint_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
 
@@ -665,7 +661,7 @@ static void joint_calc(void) {
                                                                          - joint_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f)
                                                                          - joint_K_R[2] * (chassis.leg_R.state_variable_error.x)
                                                                          - joint_K_R[3] * (chassis.leg_R.state_variable_error.x_dot)
-                                                                         - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - 0.0f)
+                                                                         - joint_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - PHI_OFFSET)
                                                                          - joint_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Tp_set_point += chassis.steer_compensatory_torque;
@@ -682,12 +678,12 @@ static void joint_calc(void) {
 
     float L_L0_dot_set = pid_calc(&chassis.leg_L.leg_pos_pid,
                                   chassis.leg_L.vmc.forward_kinematics.fk_L0.L0,
-                                  chassis.chassis_ctrl_info.target_length,
+                                  MID_L0,
                                   chassis_dt);
 
     float R_L0_dot_set = pid_calc(&chassis.leg_R.leg_pos_pid,
                                   chassis.leg_R.vmc.forward_kinematics.fk_L0.L0,
-                                  chassis.chassis_ctrl_info.target_length,
+                                  MID_L0,
                                   chassis_dt);
 
     pid_calc(&chassis.leg_L.leg_speed_pid,
@@ -700,11 +696,20 @@ static void joint_calc(void) {
              R_L0_dot_set,
              chassis_dt);
 
-
     /****** Roll pid ******/
 
     chassis.roll_compensatory_torque = CHASSIS_ROLL_PID_P * (0.0f - chassis.imu_reference.roll_rad)
                                        + CHASSIS_ROLL_PID_D * (0.0f - chassis.imu_reference.roll_gyro); // 双腿协调PD补偿
+
+    chassis.leg_L.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = chassis.leg_L.leg_speed_pid.out
+            + 0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_L.state_variable_feedback.theta)
+            + chassis.roll_compensatory_torque;
+
+    chassis.leg_R.vmc.forward_kinematics.Fxy_set_point.E.Fy_set_point = chassis.leg_R.leg_speed_pid.out
+           + 0.5f * chassis_physical_config.body_weight * GRAVITY * cosf(chassis.leg_R.state_variable_feedback.theta)
+           - chassis.roll_compensatory_torque;
+
+
 
 
     /** End End End End End End End End End End End End End End End End End End End End End End End End **/

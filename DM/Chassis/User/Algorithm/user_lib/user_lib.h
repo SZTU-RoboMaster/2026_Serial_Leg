@@ -34,7 +34,7 @@
 #endif
 
 
-#define DEGREE_TO_RAD PI/180
+#define DEGREE_TO_RAD ( (PI) / (180) )
 #define RAD_TO_DEGREE 180/PI
 
 #ifndef PI
