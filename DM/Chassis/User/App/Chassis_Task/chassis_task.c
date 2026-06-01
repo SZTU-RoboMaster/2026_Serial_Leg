@@ -48,6 +48,8 @@ static void chassis_selfhelp_reset_pid_memory(void)
 {
     CHASSIS_CLEAR_PID_STATE(chassis.chassis_turn_pos_pid);
     CHASSIS_CLEAR_PID_STATE(chassis.chassis_turn_speed_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_wheel_x_pos_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_wheel_x_speed_pid);
     CHASSIS_CLEAR_PID_STATE(chassis.chassis_leg_coordination_pid);
     CHASSIS_CLEAR_PID_STATE(chassis.leg_L.leg_pos_pid);
     CHASSIS_CLEAR_PID_STATE(chassis.leg_R.leg_pos_pid);
@@ -75,6 +77,20 @@ static void chassis_pid_init(void) {
              CHASSIS_TURN_SPEED_PID_P,
              CHASSIS_TURN_SPEED_PID_I,
              CHASSIS_TURN_SPEED_PID_D);
+
+    pid_init(&chassis.chassis_wheel_x_pos_pid,
+             CHASSIS_WHEEL_X_POS_PID_OUT_LIMIT,
+             CHASSIS_WHEEL_X_POS_PID_IOUT_LIMIT,
+             CHASSIS_WHEEL_X_POS_PID_P,
+             CHASSIS_WHEEL_X_POS_PID_I,
+             CHASSIS_WHEEL_X_POS_PID_D);
+
+    pid_init(&chassis.chassis_wheel_x_speed_pid,
+             CHASSIS_WHEEL_X_SPEED_PID_OUT_LIMIT,
+             CHASSIS_WHEEL_X_SPEED_PID_IOUT_LIMIT,
+             CHASSIS_WHEEL_X_SPEED_PID_P,
+             CHASSIS_WHEEL_X_SPEED_PID_I,
+             CHASSIS_WHEEL_X_SPEED_PID_D);
 
     /** Joint **/
     // 双腿协调PID
@@ -537,6 +553,11 @@ static void chassis_standup_joint_hold(void)
     VAL_LIMIT(chassis.leg_R.joint_B_torque, MIN_JOINT_TORQUE, MAX_JOINT_TORQUE);
 }
 
+float x_feedback = 0;
+float x_dot_feedback = 0;
+float x_ref = 0;
+float x_dot_ref = 0;
+
 static void wheel_calc(void) {
     /******************************* Wheel *************************************/
 
@@ -554,34 +575,57 @@ static void wheel_calc(void) {
                                           target_yaw_speed,
                                           chassis_dt);
 
+
+    x_feedback = 0.5f * (chassis.leg_L.state_variable_feedback.x + chassis.leg_R.state_variable_feedback.x);
+    x_dot_feedback = 0.5f * (chassis.leg_L.state_variable_feedback.x_dot + chassis.leg_R.state_variable_feedback.x_dot);
+
+    x_ref = 0.5f * (chassis.leg_L.state_variable_ref.x + chassis.leg_R.state_variable_ref.x);
+
+    if (fabsf(chassis.chassis_ctrl_info.v_m_per_s) > CHASSIS_WHEEL_X_PID_V_DEADBAND)
+    {
+        x_ref = x_feedback;
+
+        x_dot_ref = chassis.chassis_ctrl_info.v_m_per_s;
+    }
+    else
+    {
+        x_dot_ref = pid_calc(&chassis.chassis_wheel_x_pos_pid,
+                             x_feedback,
+                             x_ref,
+                             chassis_dt);
+    }
+
+    float wheel_x_torque = pid_calc(&chassis.chassis_wheel_x_speed_pid,
+                                    x_dot_feedback,
+                                    x_dot_ref,
+                                    chassis_dt);
+
     // LQR 轮端，每个 K*state 结果存到 state_variable_wheel_out，方便 VOFA 查看
     chassis.leg_L.state_variable_wheel_out.theta     = wheel_K_L[0] * (chassis.leg_L.state_variable_feedback.theta - THETA_OFFSET);
     chassis.leg_L.state_variable_wheel_out.theta_dot = wheel_K_L[1] * (chassis.leg_L.state_variable_feedback.theta_dot - 0.0f);
-    chassis.leg_L.state_variable_wheel_out.x         = wheel_K_L[2] * (chassis.leg_L.state_variable_error.x);
-    chassis.leg_L.state_variable_wheel_out.x_dot     = wheel_K_L[3] * (chassis.leg_L.state_variable_error.x_dot);
+    chassis.leg_L.state_variable_wheel_out.x         = 0.0f;
+    chassis.leg_L.state_variable_wheel_out.x_dot     = 0.0f;
     chassis.leg_L.state_variable_wheel_out.phi       = wheel_K_L[4] * (chassis.leg_L.state_variable_feedback.phi - PHI_OFFSET);
     chassis.leg_L.state_variable_wheel_out.phi_dot   = wheel_K_L[5] * (chassis.leg_L.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_R.state_variable_wheel_out.theta     = wheel_K_R[0] * (chassis.leg_R.state_variable_feedback.theta - THETA_OFFSET);
     chassis.leg_R.state_variable_wheel_out.theta_dot = wheel_K_R[1] * (chassis.leg_R.state_variable_feedback.theta_dot - 0.0f);
-    chassis.leg_R.state_variable_wheel_out.x         = wheel_K_R[2] * (chassis.leg_R.state_variable_error.x);
-    chassis.leg_R.state_variable_wheel_out.x_dot     = wheel_K_R[3] * (chassis.leg_R.state_variable_error.x_dot);
+    chassis.leg_R.state_variable_wheel_out.x         = 0.0f;
+    chassis.leg_R.state_variable_wheel_out.x_dot     = 0.0f;
     chassis.leg_R.state_variable_wheel_out.phi       = wheel_K_R[4] * (chassis.leg_R.state_variable_feedback.phi - PHI_OFFSET);
     chassis.leg_R.state_variable_wheel_out.phi_dot   = wheel_K_R[5] * (chassis.leg_R.state_variable_feedback.phi_dot - 0.0f);
 
     chassis.leg_L.wheel_torque = - chassis.leg_L.state_variable_wheel_out.theta
                                  - chassis.leg_L.state_variable_wheel_out.theta_dot
-                                 - chassis.leg_L.state_variable_wheel_out.x
-                                 - chassis.leg_L.state_variable_wheel_out.x_dot
-                                 - chassis.leg_L.state_variable_wheel_out.phi
-                                 - chassis.leg_L.state_variable_wheel_out.phi_dot;
+                                 - WHEEL_PHI_OUT * chassis.leg_L.state_variable_wheel_out.phi
+                                 - WHEEL_PHI_OUT * chassis.leg_L.state_variable_wheel_out.phi_dot
+                                 + wheel_x_torque;
 
     chassis.leg_R.wheel_torque = - chassis.leg_R.state_variable_wheel_out.theta
                                  - chassis.leg_R.state_variable_wheel_out.theta_dot
-                                 - chassis.leg_R.state_variable_wheel_out.x
-                                 - chassis.leg_R.state_variable_wheel_out.x_dot
-                                 - chassis.leg_R.state_variable_wheel_out.phi
-                                 - chassis.leg_R.state_variable_wheel_out.phi_dot;
+                                 - WHEEL_PHI_OUT * chassis.leg_R.state_variable_wheel_out.phi
+                                 - WHEEL_PHI_OUT * chassis.leg_R.state_variable_wheel_out.phi_dot
+                                 + wheel_x_torque;
 
     chassis.leg_L.wheel_torque -= chassis.wheel_turn_torque;
     chassis.leg_R.wheel_torque += chassis.wheel_turn_torque;
@@ -761,6 +805,8 @@ static void chassis_disable_task(void) {
     chassis.leg_R.state_variable_error.x = 0.0f;
     chassis.leg_L.state_variable_error.x_dot = 0.0f;
     chassis.leg_R.state_variable_error.x_dot = 0.0f;
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_wheel_x_pos_pid);
+    CHASSIS_CLEAR_PID_STATE(chassis.chassis_wheel_x_speed_pid);
 
     chassis.chassis_ctrl_info.yaw_rad = chassis.imu_reference.yaw_total_rad;
 

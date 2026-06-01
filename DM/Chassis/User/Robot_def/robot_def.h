@@ -16,12 +16,16 @@
  *******************************************************************************/
 
 /** 宏定义 **/
+
+#define WHEEL_PHI_OUT (0.8f)
+
 // phi偏置
 #define PHI1_OFFSET (2.2f)
 #define PHI4_OFFSET (1.0f)
 
-#define THETA_OFFSET ( (6.5f) * (DEGREE_TO_RAD) )
-#define PHI_OFFSET   ( -THETA_OFFSET )
+#define THETA_OFFSET ( (8.0f) * (DEGREE_TO_RAD) )
+#define PHI_OFFSET   ( (-3.0f) * (DEGREE_TO_RAD) )
+//#define PHI_OFFSET   ( -THETA_OFFSET )
 
 // 底盘运行周期
 #define CHASSIS_PERIOD 1 // ms 计算频率 不宜过低
@@ -46,8 +50,8 @@
 #define MAX_L0 0.30f
 
 #define MAX_CHASSIS_VX_SPEED 2.1f
-#define MAX_WHEEL_TORQUE 3.0f
-#define MIN_WHEEL_TORQUE (-3.0f)
+#define MAX_WHEEL_TORQUE 4.5f
+#define MIN_WHEEL_TORQUE (-4.5f)
 //#define MAX_JOINT_TORQUE 40.0f // 1.0f 40.0f
 //#define MIN_JOINT_TORQUE (-40.0f) // -1.0f -40.0f
 #define MAX_JOINT_TORQUE 15.0f
@@ -85,17 +89,31 @@
 /** Wheel **/
 
 // 转向PID
-#define CHASSIS_TURN_POS_PID_P 1.0f
+#define CHASSIS_TURN_POS_PID_P 3.0f
 #define CHASSIS_TURN_POS_PID_I 0.0f
 #define CHASSIS_TURN_POS_PID_D 0.0f
 #define CHASSIS_TURN_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_TURN_POS_PID_OUT_LIMIT 2.0f
 
-#define CHASSIS_TURN_SPEED_PID_P 1.0f
+#define CHASSIS_TURN_SPEED_PID_P 2.5f
 #define CHASSIS_TURN_SPEED_PID_I 0.0f
 #define CHASSIS_TURN_SPEED_PID_D 0.0f
 #define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 3.0f
+
+#define CHASSIS_WHEEL_X_POS_PID_P 1.0f
+#define CHASSIS_WHEEL_X_POS_PID_I 0.0f
+#define CHASSIS_WHEEL_X_POS_PID_D 0.0f
+#define CHASSIS_WHEEL_X_POS_PID_IOUT_LIMIT 0.0f
+#define CHASSIS_WHEEL_X_POS_PID_OUT_LIMIT 2.0f
+
+#define CHASSIS_WHEEL_X_SPEED_PID_P 1.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_I 0.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_D 0.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_IOUT_LIMIT 0.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_OUT_LIMIT 2.0f
+
+#define CHASSIS_WHEEL_X_PID_V_DEADBAND 0.01f
 
 /** Joint **/
 // Co PID
@@ -120,7 +138,7 @@
 #define CHASSIS_LEG_L0_SPEED_PID_OUT_LIMIT 50.0f
 
 // Roll PID
-#define CHASSIS_ROLL_PID_P 200.0f // 200
+#define CHASSIS_ROLL_PID_P 250.0f // 200
 #define CHASSIS_ROLL_PID_I 0.0f
 #define CHASSIS_ROLL_PID_D 0.0f
 #define CHASSIS_ROLL_PID_IOUT_LIMIT 0.0f
@@ -406,6 +424,8 @@ typedef struct {
     // 转向PID
     Pid chassis_turn_pos_pid;
     Pid chassis_turn_speed_pid;
+    Pid chassis_wheel_x_pos_pid;
+    Pid chassis_wheel_x_speed_pid;
 
     float wheel_turn_torque;          // 转向力矩
 

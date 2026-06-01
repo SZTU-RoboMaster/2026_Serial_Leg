@@ -99,7 +99,7 @@ void speed_calc(float dt) {
     chassis.leg_L.state_variable_feedback.x_dot_last = chassis.leg_L.state_variable_feedback.x_dot;
     chassis.leg_R.state_variable_feedback.x_dot_last = chassis.leg_R.state_variable_feedback.x_dot;
 
-    if (chassis.chassis_ctrl_mode == CHASSIS_DISABLE || chassis.chassis_state == CHASSIS_FALL)
+    if (chassis.chassis_ctrl_mode == CHASSIS_DISABLE || chassis.chassis_state == CHASSIS_FALL || chassis.chassis_state == CHASSIS_STAND_UP)
     {
         chassis.leg_L.state_variable_feedback.x = 0.0f;
         chassis.leg_R.state_variable_feedback.x = 0.0f;
@@ -110,7 +110,8 @@ void speed_calc(float dt) {
         chassis.leg_R.state_variable_ref.x = 0.0f;
         chassis.leg_L.state_variable_ref.x_dot = 0.0f;
         chassis.leg_R.state_variable_ref.x_dot = 0.0f;
-    } else
+    }
+    else
     {
         chassis.leg_L.state_variable_feedback.x_dot = feedback_vel;
         chassis.leg_R.state_variable_feedback.x_dot = feedback_vel;
