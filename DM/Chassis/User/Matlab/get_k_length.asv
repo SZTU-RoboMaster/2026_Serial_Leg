@@ -70,8 +70,8 @@ function K = get_k_length(leg_length,dt) % s
 %         Q_cost=diag([1000 0.5 100 100 3000 6]);
 %         R_cost=diag([10, 0.1]);
 
-      Q = diag([1  1  0.000001  0.000001  1000  1]);
-    R = [1  0;
+      Q = diag([1  1  0.000001  0.000001  20000  100]);
+    R = [10  0;
         0  0.1];                         % t tp
     
     K = dlqr(A_d,B_d,Q,R); % dlqr函数返回一个 p x n 的矩阵

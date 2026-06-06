@@ -23,8 +23,8 @@
 #define PHI1_OFFSET (2.2f)
 #define PHI4_OFFSET (1.0f)
 
-#define THETA_OFFSET ( (8.0f) * (DEGREE_TO_RAD) )
-#define PHI_OFFSET   ( (-3.0f) * (DEGREE_TO_RAD) )
+#define THETA_OFFSET ( (0.0f) * (DEGREE_TO_RAD) )
+#define PHI_OFFSET   ( (-0.0f) * (DEGREE_TO_RAD) )
 //#define PHI_OFFSET   ( -THETA_OFFSET )
 
 // 底盘运行周期
@@ -101,19 +101,34 @@
 #define CHASSIS_TURN_SPEED_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_TURN_SPEED_PID_OUT_LIMIT 3.0f
 
-#define CHASSIS_WHEEL_X_POS_PID_P 1.0f
+// 轮毂 位移-速度 PID
+#define CHASSIS_WHEEL_X_POS_PID_P 20.0f
 #define CHASSIS_WHEEL_X_POS_PID_I 0.0f
 #define CHASSIS_WHEEL_X_POS_PID_D 0.0f
 #define CHASSIS_WHEEL_X_POS_PID_IOUT_LIMIT 0.0f
 #define CHASSIS_WHEEL_X_POS_PID_OUT_LIMIT 2.0f
 
-#define CHASSIS_WHEEL_X_SPEED_PID_P 1.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_P 17.0f
 #define CHASSIS_WHEEL_X_SPEED_PID_I 0.0f
 #define CHASSIS_WHEEL_X_SPEED_PID_D 0.0f
 #define CHASSIS_WHEEL_X_SPEED_PID_IOUT_LIMIT 0.0f
-#define CHASSIS_WHEEL_X_SPEED_PID_OUT_LIMIT 2.0f
+#define CHASSIS_WHEEL_X_SPEED_PID_OUT_LIMIT (MAX_WHEEL_TORQUE)
 
+// 死区
 #define CHASSIS_WHEEL_X_PID_V_DEADBAND 0.01f
+
+// 关节 位移-速度 PID
+#define CHASSIS_JOINT_X_POS_PID_P 5.0f
+#define CHASSIS_JOINT_X_POS_PID_I 0.0f
+#define CHASSIS_JOINT_X_POS_PID_D 0.0f
+#define CHASSIS_JOINT_X_POS_PID_IOUT_LIMIT 0.0f
+#define CHASSIS_JOINT_X_POS_PID_OUT_LIMIT 0.5f
+
+#define CHASSIS_JOINT_X_SPEED_PID_P 40.0f
+#define CHASSIS_JOINT_X_SPEED_PID_I 0.0f
+#define CHASSIS_JOINT_X_SPEED_PID_D 0.0f
+#define CHASSIS_JOINT_X_SPEED_PID_IOUT_LIMIT 0.0f
+#define CHASSIS_JOINT_X_SPEED_PID_OUT_LIMIT 10.0f
 
 /** Joint **/
 // Co PID
@@ -430,6 +445,9 @@ typedef struct {
     float wheel_turn_torque;          // 转向力矩
 
     /** Joint **/
+
+    Pid chassis_joint_x_pos_pid;
+    Pid chassis_joint_x_speed_pid;
 
     // 防劈叉PID
     float phi0_error;

@@ -125,10 +125,10 @@ void speed_calc(float dt) {
     }
 
     // 有期望速度输入时，将位移参考同步到当前位移，消除累积位置误差，避免 LQR 阻挠运动
-    if (fabsf(ref_vel) > 0.01f) {
-        chassis.leg_L.state_variable_ref.x = chassis.leg_L.state_variable_feedback.x;
-        chassis.leg_R.state_variable_ref.x = chassis.leg_R.state_variable_feedback.x;
-    }
+//    if (fabsf(ref_vel) > 0.01f) {
+//        chassis.leg_L.state_variable_ref.x = chassis.leg_L.state_variable_feedback.x;
+//        chassis.leg_R.state_variable_ref.x = chassis.leg_R.state_variable_feedback.x;
+//    }
 
     chassis.leg_L.state_variable_error.x =
             chassis.leg_L.state_variable_feedback.x - chassis.leg_L.state_variable_ref.x;
